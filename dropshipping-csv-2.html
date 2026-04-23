@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DropCSV v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --s1: #111111;
+  --s2: #1a1a1a;
+  --s3: #222222;
+  --border: #2a2a2a;
+  --text: #f0f0f0;
+  --muted: #888;
+  --accent: #f0a500;
+  --accent2: #ff6b35;
+  --green: #2ecc71;
+  --red: #e74c3c;
+  --blue: #3498db;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* SPLASH */
+#splash {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.5s;
+}
+#splash h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 3rem;
+  letter-spacing: -1px;
+}
+#splash h1 span { color: var(--accent); }
+#splash p { color: var(--muted); margin-top: 8px; font-size: 0.85rem; }
+#splash .version { color: var(--accent); font-size: 0.75rem; margin-top: 4px; }
+.splash-btn {
+  margin-top: 32px;
+  background: var(--accent);
+  color: #000;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 14px 40px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+/* LAYOUT */
+.app { display: none; flex-direction: column; min-height: 100vh; }
+.app.visible { display: flex; }
+
+/* TABS */
+.tabs {
+  display: flex;
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: sticky; top: 0; z-index: 100;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: 0 0 auto;
+  padding: 14px 16px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* PAGES */
+.page { display: none; padding: 16px; flex: 1; }
+.page.active { display: block; }
+
+/* CARD */
+.card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.card-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+/* INPUTS */
+.input-box {
+  width: 100%;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  resize: none;
+  transition: border-color 0.2s;
+}
+.input-box:focus { border-color: var(--accent); }
+.input-box::placeholder { color: var(--muted); }
+
+/* BUTTONS */
+.btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 10px;
+}
+.btn-orange { background: var(--accent); color: #000; }
+.btn-orange:hover { background: #e09500; }
+.btn-orange:disabled { background: #555; color: #888; cursor: not-allowed; }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.btn-green { background: var(--green); color: #000; }
+.btn-red { background: var(--red); color: #fff; }
+
+/* STEP BOX */
+.step-box {
+  background: var(--s2);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+
+/* PRODOTTI LISTA */
+.prod-item {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.prod-item-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.prod-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--s3);
+}
+.prod-info { flex: 1; min-width: 0; }
+.prod-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.prod-asin {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-family: monospace;
+}
+.prod-price-amz {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.prod-price-amz span { color: var(--accent); font-weight: 600; }
+.price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.price-input {
+  flex: 1;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  outline: none;
+}
+.price-input:focus { border-color: var(--accent); }
+.price-euro {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+.prod-status {
+  font-size: 0.72rem;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+.prod-status.ok { background: rgba(46,204,113,0.15); color: var(--green); }
+.prod-status.err { background: rgba(231,76,60,0.15); color: var(--red); }
+.prod-status.loading { background: rgba(240,165,0,0.15); color: var(--accent); }
+.prod-remove {
+  background: transparent;
+  border: none;
+  color: var(--red);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+/* STATS BAR */
+.stats-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.stat-chip {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  text-align: center;
+  flex: 1;
+}
+.stat-chip .num {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+
+/* SPINNER */
+.spinner {
+  width: 28px; height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-wrap {
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+/* EBAY LINK */
+.ebay-link {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  background: rgba(52,152,219,0.1);
+  border: 1px solid rgba(52,152,219,0.3);
+  border-radius: 8px;
+  color: var(--blue);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+/* CSV DOWNLOAD */
+.csv-box {
+  background: rgba(46,204,113,0.08);
+  border: 1px solid rgba(46,204,113,0.3);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  margin-top: 12px;
+}
+.csv-box .icon { font-size: 2.5rem; margin-bottom: 8px; }
+.csv-box p { color: var(--muted); font-size: 0.82rem; line-height: 1.6; }
+
+/* IMPOSTAZIONI */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-label { font-size: 0.85rem; color: var(--text); }
+.setting-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+/* NOTIFICA */
+.notif {
+  position: fixed;
+  bottom: 20px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 0.85rem;
+  z-index: 9998;
+  display: none;
+  white-space: nowrap;
+  max-width: 90vw;
+  text-align: center;
+}
+.notif.show { display: block; animation: fadeInUp 0.3s ease; }
+.notif.ok { border-color: var(--green); color: var(--green); }
+.notif.err { border-color: var(--red); color: var(--red); }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* BADGE */
+.badge {
+  display: inline-block;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.65rem;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <h1>Drop<span>CSV</span></h1>
+  <p>Generatore CSV per eBay</p>
+  <p class="version">v2 — dropez1</p>
+  <button class="splash-btn" onclick="entrApp()">▶ ENTRA</button>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('spia')">👁️ Spia</div>
+    <div class="tab" onclick="switchTab('cerca')">🔍 Cerca</div>
+    <div class="tab" onclick="switchTab('prodotti')">📦 Prodotti <span class="badge" id="badgeProd">0</span></div>
+    <div class="tab" onclick="switchTab('csv')">📄 CSV</div>
+    <div class="tab" onclick="switchTab('impostazioni')">⚙️</div>
+  </div>
+
+  <!-- TAB SPIA -->
+  <div class="page active" id="page-spia">
+    <div class="card">
+      <div class="card-label">👁️ Spia carugno-shop</div>
+      <div class="step-box">
+        1️⃣ Clicca il pulsante qui sotto<br>
+        2️⃣ Guarda i prodotti venduti da carugno<br>
+        3️⃣ Copia il titolo del prodotto che ti interessa<br>
+        4️⃣ Vai nella tab 🔍 Cerca e cercalo su Amazon
+      </div>
+      <a href="https://www.ebay.it/sch/i.html?_ssn=carugno-shop&_sop=13" target="_blank"
+         style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#000;font-family:'Syne',sans-serif;font-weight:700;padding:13px;border-radius:10px;text-decoration:none;font-size:0.9rem">
+        🔗 Apri carugno-shop
+      </a>
+    </div>
+    <div class="card">
+      <div class="card-label">💡 Come funziona</div>
+      <div class="step-box" style="margin-bottom:0">
+        1️⃣ <strong style="color:#fff">Spia</strong> → guarda cosa vende carugno-shop<br>
+        2️⃣ <strong style="color:#fff">Cerca</strong> → incolla ASIN o link Amazon (anche 10-20)<br>
+        3️⃣ <strong style="color:#fff">Prodotti</strong> → metti il prezzo su ogni prodotto<br>
+        4️⃣ <strong style="color:#fff">CSV</strong> → genera e scarica il file per eBay<br>
+        5️⃣ Carica il CSV su eBay Seller Hub
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB CERCA -->
+  <div class="page" id="page-cerca">
+    <div class="card">
+      <div class="card-label">🔍 Incolla link o ASIN Amazon</div>
+      <div class="step-box">
+        Puoi incollare più link o ASIN, uno per riga.<br>
+        Non c'è limite — puoi metterne anche 20!
+      </div>
+      <textarea id="inputLinks" class="input-box" rows="6"
+        placeholder="Incolla qui i link Amazon o gli ASIN&#10;Es:&#10;https://www.amazon.it/dp/B08N5WRWNW&#10;B08N5WRWNW&#10;B07XJ8C8F7"></textarea>
+      <button class="btn btn-orange" id="btnCerca" onclick="cercaProdotti()">🔍 Cerca prodotti</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('inputLinks').value=''">🗑️ Pulisci</button>
+    </div>
+    <div id="loadCerca" style="display:none">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <p style="margin-top:8px" id="loadMsg">Carico prodotti...</p>
+      </div>
+    </div>
+    <div id="errCerca" style="display:none;color:var(--red);font-size:0.82rem;padding:10px;background:rgba(231,76,60,0.1);border-radius:8px;margin-top:8px"></div>
+  </div>
+
+  <!-- TAB PRODOTTI -->
+  <div class="page" id="page-prodotti">
+    <div id="prodEmpty" class="card" style="text-align:center;padding:32px">
+      <div style="font-size:3rem;margin-bottom:12px">📦</div>
+      <p style="color:var(--muted)">Nessun prodotto ancora.<br>Vai nella tab 🔍 Cerca e cerca i tuoi ASIN.</p>
+    </div>
+    <div id="prodContainer" style="display:none">
+      <div class="stats-bar">
+        <div class="stat-chip"><div class="num" id="statTot">0</div><div>Totale</div></div>
+        <div class="stat-chip"><div class="num" id="statOk">0</div><div>Con prezzo</div></div>
+        <div class="stat-chip"><div class="num" id="statMiss">0</div><div>Senza prezzo</div></div>
+      </div>
+      <div id="prodList"></div>
+      <button class="btn btn-ghost" onclick="svuotaLista()">🗑️ Svuota lista</button>
+    </div>
+  </div>
+
+  <!-- TAB CSV -->
+  <div class="page" id="page-csv">
+    <div id="csvEmpty" class="card" style="text-align:center;padding:32px">
+      <div style="font-size:3rem;margin-bottom:12px">📄</div>
+      <p style="color:var(--muted)">Aggiungi prodotti e metti i prezzi nella tab 📦 Prodotti prima di generare il CSV.</p>
+    </div>
+    <div id="csvContainer" style="display:none">
+      <div class="card">
+        <div class="card-label">📋 Riepilogo CSV</div>
+        <div id="csvRiepilogo" style="font-size:0.85rem;line-height:2;color:var(--muted)"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">⚙️ Impostazioni CSV</div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Quantità per annuncio</div>
+            <div class="setting-sub">Numero di pezzi disponibili</div>
+          </div>
+          <input type="number" id="csvQta" value="5" min="1" max="99"
+            style="width:60px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px;color:var(--text);text-align:center;font-size:0.9rem;outline:none">
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Condizione</div>
+          </div>
+          <select id="csvCondizione"
+            style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px;color:var(--text);font-size:0.85rem;outline:none">
+            <option value="1000">Nuovo</option>
+            <option value="3000">Usato - ottime cond.</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Sponsorizzazione</div>
+            <div class="setting-sub">% su ogni annuncio</div>
+          </div>
+          <input type="number" id="csvSponsor" value="2.1" min="1" max="20" step="0.1"
+            style="width:70px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px;color:var(--text);text-align:center;font-size:0.9rem;outline:none">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">🏪 Profili negozio eBay</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">
+          Inserisci i nomi esatti dei profili nel tuo negozio eBay
+        </div>
+        <div style="margin-bottom:8px">
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px">Profilo spedizione</div>
+          <input type="text" id="profiloSpedizione" class="input-box"
+            placeholder="Es. Spedizione AMZ Italia" value="Spedizione AMZ Italia">
+        </div>
+        <div style="margin-bottom:8px">
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px">Profilo reso</div>
+          <input type="text" id="profiloReso" class="input-box"
+            placeholder="Es. reso AMZ ITALIA" value="reso AMZ ITALIA">
+        </div>
+        <div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px">Profilo pagamento</div>
+          <input type="text" id="profiloPagamento" class="input-box"
+            placeholder="Es. EBAY PAGAMENTO ITALIA" value="EBAY PAGAMENTO ITALIA">
+        </div>
+      </div>
+      <button class="btn btn-orange" id="btnGenCSV" onclick="generaCSV()">📄 Genera e scarica CSV</button>
+      <div class="csv-box" id="csvSuccesso" style="display:none">
+        <div class="icon">✅</div>
+        <p>File CSV generato!<br>Caricalo su <strong style="color:#fff">eBay Seller Hub → Reports → Upload</strong></p>
+        <a href="https://www.ebay.it/sh/reports/uploads" target="_blank" class="ebay-link" style="margin-top:12px">
+          🚀 Apri eBay Seller Hub
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB IMPOSTAZIONI -->
+  <div class="page" id="page-impostazioni">
+    <div class="card">
+      <div class="card-label">🔑 API Amazon (RapidAPI)</div>
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;line-height:1.6">
+        Inserisci la tua chiave RapidAPI per cercare i prodotti Amazon.
+      </div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px">Chiave API</div>
+      <input type="text" id="rapidApiKey" class="input-box" placeholder="Incolla qui la tua chiave RapidAPI...">
+      <button class="btn btn-orange" onclick="salvaApiKey()" style="margin-top:10px">💾 Salva chiave</button>
+      <div id="apiKeyStatus" style="font-size:0.78rem;margin-top:8px;display:none"></div>
+    </div>
+    <div class="card">
+      <div class="card-label">🌐 Worker Cloudflare</div>
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;line-height:1.6">
+        URL del Worker per il proxy delle foto.
+      </div>
+      <input type="text" id="workerUrl" class="input-box"
+        placeholder="https://dropcsv.carminefascion1.workers.dev"
+        value="https://dropcsv.carminefascion1.workers.dev">
+      <button class="btn btn-ghost" onclick="salvaWorker()" style="margin-top:10px">💾 Salva</button>
+    </div>
+    <div class="card">
+      <div class="card-label">ℹ️ Info</div>
+      <div style="font-size:0.82rem;color:var(--muted);line-height:2">
+        <strong style="color:#fff">DropCSV v2</strong><br>
+        Generatore CSV per eBay Seller Hub<br>
+        Foto via Cloudflare Worker proxy<br>
+        Titoli AI ottimizzati — max 80 caratteri
+      </div>
+    </div>
+  </div>
+
+</div><!-- fine app -->
+
+<!-- NOTIFICA -->
+<div class="notif" id="notif"></div>
+
+<script>
+// ===== CONFIG =====
+var WORKER_URL = localStorage.getItem('csv_worker_url') || 'https://dropcsv.carminefascion1.workers.dev';
+var RAPIDAPI_KEY = localStorage.getItem('csv_rapidapi_key') || '';
+var API_SLOTS = [
+  { name: 'rapidapi_realtime', host: 'real-time-amazon-data.p.rapidapi.com' },
+  { name: 'rapidapi_online', host: 'amazon-online-data-api.p.rapidapi.com' },
+];
+
+// ===== PRODOTTI IN MEMORIA =====
+var prodotti = JSON.parse(localStorage.getItem('csv_prodotti') || '[]');
+
+// ===== SPLASH =====
+function entrApp() {
+  document.getElementById('splash').style.opacity = '0';
+  setTimeout(function() {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    caricaImpostazioni();
+    aggiornaUI();
+  }, 500);
+}
+
+// ===== TABS =====
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(function(el, i) {
+    el.classList.toggle('active', ['spia','cerca','prodotti','csv','impostazioni'][i] === t);
+  });
+  document.querySelectorAll('.page').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('page-' + t).classList.add('active');
+  if (t === 'prodotti') renderProdotti();
+  if (t === 'csv') renderCSV();
+  if (t === 'impostazioni') caricaImpostazioni();
+}
+
+// ===== NOTIFICA =====
+function mostraNot(msg, tipo) {
+  var el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = 'notif show ' + (tipo || '');
+  setTimeout(function() { el.className = 'notif'; }, 3000);
+}
+
+// ===== ESTRAI ASIN DA URL =====
+function asinDaUrl(url) {
+  var m;
+  m = url.match(/\/dp\/([A-Z0-9]{10})/); if (m) return m[1];
+  m = url.match(/\/gp\/product\/([A-Z0-9]{10})/); if (m) return m[1];
+  m = url.match(/[?&]asin=([A-Z0-9]{10})/i); if (m) return m[1];
+  m = url.match(/\/([A-Z0-9]{10})(?:[/?]|$)/); if (m) return m[1];
+  return null;
+}
+
+// ===== ESPANDI LINK ABBREVIATI =====
+async function risolviLink(url) {
+  try {
+    var r = await fetch('https://unshorten.me/json/' + encodeURIComponent(url));
+    var d = await r.json();
+    var expanded = d && d.resolved_url ? d.resolved_url : '';
+    if (expanded) return asinDaUrl(expanded);
+  } catch(e) {}
+  return null;
+}
+
+// ===== ESTRAI ASINS DA TESTO =====
+async function estraiAsins(testo) {
+  var asins = [];
+  var righe = testo.split(/[\n\s]+/);
+  for (var i = 0; i < righe.length; i++) {
+    var riga = righe[i].trim();
+    if (!riga) continue;
+    if (/^[A-Z0-9]{10}$/i.test(riga)) { asins.push(riga.toUpperCase()); continue; }
+    var asin = asinDaUrl(riga);
+    if (asin) { asins.push(asin); continue; }
+    if (riga.startsWith('http') || riga.includes('amzn.')) {
+      var url = riga.startsWith('http') ? riga : 'https://' + riga;
+      var resolved = await risolviLink(url);
+      if (resolved) asins.push(resolved);
+    }
+  }
+  return asins.filter(function(v, i, a) { return a.indexOf(v) === i; });
+}
+
+// ===== CERCA PRODOTTI =====
+async function cercaProdotti() {
+  var testo = document.getElementById('inputLinks').value.trim();
+  if (!testo) { mostraNot('❌ Incolla almeno un link o ASIN', 'err'); return; }
+
+  if (!RAPIDAPI_KEY) {
+    mostraNot('❌ Inserisci la chiave RapidAPI nelle Impostazioni', 'err');
+    switchTab('impostazioni');
+    return;
+  }
+
+  document.getElementById('errCerca').style.display = 'none';
+  document.getElementById('loadCerca').style.display = 'block';
+  document.getElementById('btnCerca').disabled = true;
+  document.getElementById('loadMsg').textContent = 'Espando i link...';
+
+  var asins = await estraiAsins(testo);
+  if (asins.length === 0) {
+    document.getElementById('loadCerca').style.display = 'none';
+    document.getElementById('btnCerca').disabled = false;
+    document.getElementById('errCerca').style.display = 'block';
+    document.getElementById('errCerca').textContent = '❌ Nessun ASIN valido trovato. Controlla i link e riprova.';
+    return;
+  }
+  document.getElementById('loadMsg').textContent = 'Carico ' + asins.length + ' prodotti...';
+
+  var trovati = 0;
+  var errori = 0;
+
+  for (var i = 0; i < asins.length; i++) {
+    var asin = asins[i];
+    document.getElementById('loadMsg').textContent = 'Prodotto ' + (i+1) + ' di ' + asins.length + '...';
+
+    // Controlla se già presente
+    if (prodotti.find(function(p) { return p.asin === asin; })) {
+      mostraNot('⚠️ ' + asin + ' già presente', '');
+      continue;
+    }
+
+    try {
+      var dati = await fetchAmazon(asin);
+      if (dati) {
+        prodotti.push(dati);
+        trovati++;
+      } else {
+        errori++;
+      }
+    } catch(e) {
+      errori++;
+    }
+
+    // Pausa tra le richieste
+    if (i < asins.length - 1) await sleep(500);
+  }
+
+  salvaProdotti();
+  aggiornaUI();
+
+  document.getElementById('loadCerca').style.display = 'none';
+  document.getElementById('btnCerca').disabled = false;
+
+  if (trovati > 0) {
+    mostraNot('✅ ' + trovati + ' prodotti aggiunti!', 'ok');
+    document.getElementById('inputLinks').value = '';
+    switchTab('prodotti');
+  } else {
+    document.getElementById('errCerca').style.display = 'block';
+    document.getElementById('errCerca').textContent = '❌ Nessun prodotto trovato. Controlla la chiave API o i link.';
+  }
+}
+
+// ===== FETCH AMAZON =====
+async function fetchAmazon(asin) {
+  var url = 'https://real-time-amazon-data.p.rapidapi.com/product-details?asin=' + asin + '&country=IT';
+  var resp = await fetch(url, {
+    headers: {
+      'X-RapidAPI-Key': RAPIDAPI_KEY,
+      'X-RapidAPI-Host': 'real-time-amazon-data.p.rapidapi.com'
+    }
+  });
+  if (!resp.ok) throw new Error('API error ' + resp.status);
+  var json = await resp.json();
+  var d = json.data || json;
+  if (!d || !d.product_title) return null;
+
+  // Foto
+  var imgs = [];
+  if (d.product_photos) imgs = d.product_photos.slice(0, 12);
+  else if (d.product_photo) imgs = [d.product_photo];
+
+  // Prezzo
+  var prezzoAmz = '';
+  if (d.product_price) prezzoAmz = String(d.product_price).replace(/[^\d.,]/g,'').replace(',','.');
+  else if (d.product_original_price) prezzoAmz = String(d.product_original_price).replace(/[^\d.,]/g,'').replace(',','.');
+
+  // Specifiche
+  var specs = [];
+  if (d.product_information) {
+    Object.keys(d.product_information).slice(0, 10).forEach(function(k) {
+      var v = d.product_information[k];
+      if (k && v && String(v).length < 100) specs.push({ name: k, value: String(v) });
+    });
+  }
+
+  // Titolo pulito (no Amazon, no Prime, no marchi problematici, max 80 char)
+  var titolo = pulisciTitolo(d.product_title || '');
+
+  return {
+    asin: asin,
+    titolo: titolo,
+    titoloOriginale: d.product_title || '',
+    prezzoAmz: prezzoAmz,
+    prezzoEbay: '',
+    imgs: imgs,
+    specifiche: specs,
+    descrizione: d.product_description || d.about_product || '',
+    categoria: '',
+    timestamp: Date.now()
+  };
+}
+
+// ===== PULISCI TITOLO =====
+function pulisciTitolo(titolo) {
+  // Rimuovi parole vietate
+  var paroleVietate = [
+    /\bamazon\b/gi, /\bprime\b/gi, /\bamazon\.it\b/gi,
+    /\[.*?\]/g, /\(.*?limited.*?\)/gi,
+    /™/g, /®/g, /©/g
+  ];
+  paroleVietate.forEach(function(p) { titolo = titolo.replace(p, ''); });
+  // Pulisci spazi multipli
+  titolo = titolo.replace(/\s+/g, ' ').trim();
+  // Max 80 caratteri
+  if (titolo.length > 80) titolo = titolo.substring(0, 77).trim() + '...';
+  return titolo;
+}
+
+// ===== RENDER PRODOTTI =====
+function renderProdotti() {
+  var container = document.getElementById('prodContainer');
+  var empty = document.getElementById('prodEmpty');
+  var list = document.getElementById('prodList');
+
+  if (prodotti.length === 0) {
+    empty.style.display = 'block';
+    container.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  container.style.display = 'block';
+
+  // Stats
+  var conPrezzo = prodotti.filter(function(p) { return p.prezzoEbay && parseFloat(p.prezzoEbay) > 0; }).length;
+  document.getElementById('statTot').textContent = prodotti.length;
+  document.getElementById('statOk').textContent = conPrezzo;
+  document.getElementById('statMiss').textContent = prodotti.length - conPrezzo;
+
+  list.innerHTML = '';
+  prodotti.forEach(function(prod, idx) {
+    var img = prod.imgs && prod.imgs.length > 0 ? prod.imgs[0] : '';
+    var div = document.createElement('div');
+    div.className = 'prod-item';
+    div.innerHTML = `
+      <div class="prod-item-header">
+        ${img ? '<img class="prod-thumb" src="' + img + '" onerror="this.style.display=\'none\'">' : '<div class="prod-thumb"></div>'}
+        <div class="prod-info">
+          <div class="prod-title">${prod.titolo}</div>
+          <div class="prod-asin">${prod.asin}</div>
+          ${prod.prezzoAmz ? '<div class="prod-price-amz">Amazon: <span>€' + prod.prezzoAmz + '</span></div>' : ''}
+        </div>
+        <button class="prod-remove" onclick="rimuoviProdotto(${idx})">✕</button>
+      </div>
+      <div class="price-row">
+        <span class="price-euro">€</span>
+        <input type="number" class="price-input" placeholder="Prezzo eBay"
+          value="${prod.prezzoEbay || ''}" min="0" step="0.01"
+          onchange="aggiornaPrezzoEbay(${idx}, this.value)"
+          oninput="aggiornaPrezzoEbay(${idx}, this.value)">
+      </div>
+      <div class="prod-status ${prod.prezzoEbay && parseFloat(prod.prezzoEbay) > 0 ? 'ok' : 'err'}">
+        ${prod.prezzoEbay && parseFloat(prod.prezzoEbay) > 0 ? '✅ Prezzo impostato' : '⚠️ Inserisci il prezzo'}
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function aggiornaPrezzoEbay(idx, val) {
+  prodotti[idx].prezzoEbay = val;
+  salvaProdotti();
+  aggiornaUI();
+  // Aggiorna status inline
+  var items = document.querySelectorAll('.prod-item');
+  if (items[idx]) {
+    var status = items[idx].querySelector('.prod-status');
+    if (status) {
+      var ok = val && parseFloat(val) > 0;
+      status.className = 'prod-status ' + (ok ? 'ok' : 'err');
+      status.textContent = ok ? '✅ Prezzo impostato' : '⚠️ Inserisci il prezzo';
+    }
+  }
+}
+
+function rimuoviProdotto(idx) {
+  prodotti.splice(idx, 1);
+  salvaProdotti();
+  aggiornaUI();
+  renderProdotti();
+}
+
+function svuotaLista() {
+  if (confirm('Vuoi svuotare tutta la lista prodotti?')) {
+    prodotti = [];
+    salvaProdotti();
+    aggiornaUI();
+    renderProdotti();
+  }
+}
+
+// ===== RENDER CSV =====
+function renderCSV() {
+  var empty = document.getElementById('csvEmpty');
+  var container = document.getElementById('csvContainer');
+
+  if (prodotti.length === 0) {
+    empty.style.display = 'block';
+    container.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  container.style.display = 'block';
+
+  var conPrezzo = prodotti.filter(function(p) { return p.prezzoEbay && parseFloat(p.prezzoEbay) > 0; });
+  document.getElementById('csvRiepilogo').innerHTML =
+    '📦 Prodotti totali: <strong style="color:#fff">' + prodotti.length + '</strong><br>' +
+    '✅ Con prezzo: <strong style="color:var(--green)">' + conPrezzo.length + '</strong><br>' +
+    '⚠️ Senza prezzo: <strong style="color:var(--red)">' + (prodotti.length - conPrezzo.length) + '</strong><br>' +
+    '📄 Righe nel CSV: <strong style="color:#fff">' + conPrezzo.length + '</strong>';
+}
+
+// ===== GENERA CSV =====
+async function generaCSV() {
+  var pronti = prodotti.filter(function(p) { return p.prezzoEbay && parseFloat(p.prezzoEbay) > 0; });
+  if (pronti.length === 0) {
+    mostraNot('❌ Inserisci il prezzo su almeno un prodotto', 'err');
+    return;
+  }
+
+  document.getElementById('btnGenCSV').disabled = true;
+  document.getElementById('btnGenCSV').textContent = '⏳ Generazione in corso...';
+  document.getElementById('csvSuccesso').style.display = 'none';
+
+  var qta = parseInt(document.getElementById('csvQta').value) || 5;
+  var condizione = document.getElementById('csvCondizione').value;
+  var sponsor = parseFloat(document.getElementById('csvSponsor').value) || 2.1;
+  var profSped = document.getElementById('profiloSpedizione').value;
+  var profReso = document.getElementById('profiloReso').value;
+  var profPag = document.getElementById('profiloPagamento').value;
+
+  // Intestazione CSV per eBay Seller Hub
+  var headers = [
+    'Action','SiteID','Country','Currency','DispatchTimeMax',
+    'Title','Description','PicURL','Category','StartPrice',
+    'Quantity','ConditionID','ListingDuration',
+    'ShippingProfileName','ReturnProfileName','PaymentProfileName',
+    'AdFormat','AdRate','PostalCode','Location'
+  ];
+
+  var righe = [headers.join(',')];
+
+  for (var i = 0; i < pronti.length; i++) {
+    var p = pronti[i];
+
+    // Foto — proxy via Worker
+    var fotoUrls = [];
+    if (p.imgs && p.imgs.length > 0) {
+      p.imgs.slice(0, 12).forEach(function(url) {
+        var proxyUrl = WORKER_URL + '/foto?url=' + encodeURIComponent(url);
+        fotoUrls.push(proxyUrl);
+      });
+      // Duplica fino a 12
+      while (fotoUrls.length < 12) {
+        fotoUrls.push(fotoUrls[fotoUrls.length % p.imgs.length]);
+      }
+    }
+    var picUrl = fotoUrls.slice(0, 12).join('|');
+
+    // Descrizione
+    var desc = '<p><strong>' + p.titoloOriginale + '</strong></p>' +
+      '<p>&nbsp;</p>' +
+      '<p>🚚 <strong>SPEDIZIONE GRATUITA IN TUTTA ITALIA</strong></p>' +
+      '<p>&nbsp;</p>' +
+      '<p>' + p.asin + '</p>' +
+      '<p>&nbsp;</p>' +
+      (p.descrizione ? '<p>' + p.descrizione.replace(/"/g, "'").substring(0, 1000) + '</p>' : '');
+
+    // Riga CSV
+    var riga = [
+      'Add',
+      'Italy',
+      'IT',
+      'EUR',
+      '3',
+      '"' + p.titolo.replace(/"/g, '""') + '"',
+      '"' + desc.replace(/"/g, '""') + '"',
+      '"' + picUrl + '"',
+      '"' + (p.categoria || '') + '"',
+      parseFloat(p.prezzoEbay).toFixed(2),
+      qta,
+      condizione,
+      'GTC',
+      '"' + profSped + '"',
+      '"' + profReso + '"',
+      '"' + profPag + '"',
+      'Classified',
+      sponsor.toFixed(1),
+      '80100',
+      '"Italia"'
+    ];
+
+    righe.push(riga.join(','));
+  }
+
+  var csvContent = righe.join('\n');
+  var blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'dropcsv_ebay_' + pronti.length + '_prodotti.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  document.getElementById('btnGenCSV').disabled = false;
+  document.getElementById('btnGenCSV').textContent = '📄 Genera e scarica CSV';
+  document.getElementById('csvSuccesso').style.display = 'block';
+  mostraNot('✅ CSV scaricato — ' + pronti.length + ' prodotti!', 'ok');
+}
+
+// ===== UTILITY =====
+function salvaProdotti() {
+  localStorage.setItem('csv_prodotti', JSON.stringify(prodotti));
+}
+
+function aggiornaUI() {
+  document.getElementById('badgeProd').textContent = prodotti.length;
+}
+
+function sleep(ms) {
+  return new Promise(function(resolve) { setTimeout(resolve, ms); });
+}
+
+// ===== IMPOSTAZIONI =====
+function caricaImpostazioni() {
+  var key = localStorage.getItem('csv_rapidapi_key') || '';
+  var worker = localStorage.getItem('csv_worker_url') || 'https://dropcsv.carminefascion1.workers.dev';
+  document.getElementById('rapidApiKey').value = key;
+  document.getElementById('workerUrl').value = worker;
+  RAPIDAPI_KEY = key;
+  WORKER_URL = worker;
+}
+
+function salvaApiKey() {
+  var key = document.getElementById('rapidApiKey').value.trim();
+  if (!key) { mostraNot('❌ Inserisci la chiave', 'err'); return; }
+  localStorage.setItem('csv_rapidapi_key', key);
+  RAPIDAPI_KEY = key;
+  var st = document.getElementById('apiKeyStatus');
+  st.style.display = 'block';
+  st.style.color = '#2ecc71';
+  st.textContent = '✅ Chiave salvata!';
+  setTimeout(function() { st.style.display = 'none'; }, 3000);
+}
+
+function salvaWorker() {
+  var url = document.getElementById('workerUrl').value.trim();
+  if (!url) { mostraNot('❌ Inserisci l\'URL del Worker', 'err'); return; }
+  localStorage.setItem('csv_worker_url', url);
+  WORKER_URL = url;
+  mostraNot('✅ Worker salvato!', 'ok');
+}
+
+// ===== INIT =====
+aggiornaUI();
+</script>
+</body>
+</html>
