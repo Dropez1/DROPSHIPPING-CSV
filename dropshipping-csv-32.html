@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DropCSV v32</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --s1: #111111;
+  --s2: #1a1a1a;
+  --s3: #222222;
+  --border: #2a2a2a;
+  --text: #f0f0f0;
+  --muted: #777777;
+  --accent: #f0a500;
+  --green: #2ecc71;
+  --red: #e74c3c;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* SPLASH */
+#splash {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999; transition: opacity 0.4s;
+}
+#splash h1 { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; letter-spacing: -1px; }
+#splash h1 span { color: var(--accent); }
+#splash p { color: var(--muted); margin-top: 8px; font-size: 0.82rem; }
+.splash-btn {
+  margin-top: 32px; background: var(--accent); color: #000;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem;
+  padding: 15px 48px; border: none; border-radius: 50px; cursor: pointer;
+}
+
+/* APP */
+.app { display: none; }
+.app.visible { display: block; }
+
+/* TABS */
+.tabs {
+  display: flex; background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.tab {
+  flex: 1; padding: 14px 4px; text-align: center;
+  font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700;
+  color: var(--muted); cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all 0.2s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* PAGES */
+.page { display: none; padding: 14px; padding-bottom: 40px; }
+.page.active { display: block; }
+
+/* CARD */
+.card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px; margin-bottom: 12px;
+}
+.card-label {
+  font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--accent); margin-bottom: 10px;
+}
+
+/* STEP BOX */
+.step-box {
+  background: var(--s2); border-radius: 10px; padding: 12px;
+  font-size: 0.82rem; color: var(--muted); line-height: 1.9; margin-bottom: 12px;
+}
+.step-box strong { color: var(--text); }
+
+/* INPUT */
+.input-field {
+  width: 100%; background: var(--s2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; color: var(--text);
+  font-size: 0.88rem; font-family: 'DM Sans', sans-serif; outline: none;
+}
+.input-field:focus { border-color: var(--accent); }
+.input-field::placeholder { color: var(--muted); }
+
+/* BUTTONS */
+.btn {
+  display: block; width: 100%; padding: 14px; border: none; border-radius: 12px;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem;
+  cursor: pointer; margin-top: 10px; text-align: center; text-decoration: none;
+}
+.btn-orange { background: var(--accent); color: #000; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+/* PANNELLO PRODOTTO EBAY SPIA */
+#spiaRisultato { display:none; margin-top:4px; }
+.ebay-prod-card { background:var(--s2); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:10px; }
+.ebay-prod-foto { display:flex; gap:8px; overflow-x:auto; padding:12px; padding-bottom:8px; }
+.ebay-prod-foto img { width:90px; height:90px; object-fit:contain; border-radius:10px; flex-shrink:0; border:1px solid var(--border); background:var(--s3); }
+.ebay-prod-body { padding:12px; }
+.ebay-field-lbl { font-family:'Syne',sans-serif; font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--accent); margin-top:14px; margin-bottom:5px; }
+.ebay-field-lbl:first-child { margin-top:0; }
+.ebay-field-val { background:var(--s1); border:1px solid var(--border); border-radius:8px; padding:10px; font-size:0.82rem; color:var(--text); line-height:1.6; word-break:break-word; position:relative; }
+.ebay-field-val.copyable { cursor:pointer; padding-right:60px; }
+.btn-copia-campo { position:absolute; right:8px; top:50%; transform:translateY(-50%); background:var(--s3); border:1px solid var(--border); border-radius:6px; color:var(--accent); font-size:0.65rem; font-family:'Syne',sans-serif; font-weight:700; padding:4px 8px; cursor:pointer; white-space:nowrap; }
+.ebay-specs-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.ebay-spec-item { background:var(--s1); border:1px solid var(--border); border-radius:8px; padding:8px; }
+.ebay-spec-key { font-size:0.62rem; color:var(--muted); margin-bottom:2px; }
+.ebay-spec-val { font-size:0.76rem; color:var(--text); }
+.ebay-desc-box { background:var(--s1); border:1px solid var(--border); border-radius:8px; padding:10px; font-size:0.8rem; color:var(--text); line-height:1.6; max-height:200px; overflow-y:auto; word-break:break-word; }
+.spia-spinner { display:none; text-align:center; padding:20px; }
+.spia-spinner .spinner { width:28px; height:28px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 8px; }
+.spia-err { display:none; background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.3); border-radius:10px; padding:12px; color:var(--red); font-size:0.82rem; margin-top:10px; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <h1>Drop<span>CSV</span></h1>
+  <p>Generatore CSV per eBay — v27</p>
+  <button class="splash-btn" onclick="avvia()">&#9654; ENTRA</button>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" id="tab-spia" onclick="mostraTab('spia')">Spia</div>
+    <div class="tab" id="tab-cerca" onclick="mostraTab('cerca')">Cerca</div>
+    <div class="tab" id="tab-prodotti" onclick="mostraTab('prodotti')">Prodotti</div>
+    <div class="tab" id="tab-csv" onclick="mostraTab('csv')">CSV</div>
+    <div class="tab" id="tab-impost" onclick="mostraTab('impost')">Set</div>
+  </div>
+
+  <!-- TAB SPIA -->
+  <div class="page active" id="page-spia">
+
+    <div class="card">
+      <div class="card-label">Passo 1 — Apri carugno-shop</div>
+      <div class="step-box">
+        1 — Clicca il pulsante qui sotto<br>
+        2 — Guarda i prodotti <strong>Venduti</strong><br>
+        3 — <strong>Copia il titolo</strong> del prodotto che ti interessa<br>
+        4 — Torna qui e incollalo nel campo sotto
+      </div>
+      <a href="https://www.ebay.it/sch/i.html?_ssn=carugno-shop&_sop=13" target="_blank" class="btn btn-orange">
+        Apri carugno-shop
+      </a>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Passo 2 — Cerca su Amazon</div>
+      <div class="step-box">
+        Incolla il titolo copiato da carugno-shop.<br>
+        Clicca <strong>Cerca su Amazon</strong> per trovare il prodotto.
+      </div>
+      <form action="https://www.amazon.it/s" method="GET" target="_blank">
+        <input type="text" name="k" id="spiaInput" class="input-field" placeholder="Incolla qui il titolo del prodotto...">
+        <button type="submit" class="btn btn-orange" style="margin-top:10px">Cerca su Amazon</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Passo 3 — Copia il link Amazon</div>
+      <div class="step-box">
+        Hai trovato il prodotto su Amazon?<br>
+        1 — <strong>Copia il link</strong> dalla barra del browser<br>
+        2 — Vai nella tab <strong style="color:var(--accent)">Cerca</strong><br>
+        3 — Incolla il link e premi Cerca prodotti
+      </div>
+      <button class="btn btn-ghost" onclick="mostraTab('cerca')" style="margin-top:0">
+        Vai alla tab Cerca
+      </button>
+    </div>
+
+    <!-- SEZIONE: LEGGI PRODOTTO EBAY -->
+    <div class="card">
+      <div class="card-label">Leggi prodotto carugno-shop</div>
+      <div class="step-box">
+        Incolla il link del prodotto eBay di carugno-shop.<br>
+        Funziona con link completi e link brevi (ebay.us/m/...).
+      </div>
+      <input type="text" id="spiaEbayLink" class="input-field" placeholder="https://www.ebay.it/itm/... oppure https://ebay.us/m/...">
+      <button class="btn btn-orange" onclick="leggiProdottoEbay()" style="margin-top:10px">Leggi prodotto eBay</button>
+      <div class="spia-spinner" id="spiaSpinner">
+        <div class="spinner"></div>
+        <p style="color:var(--muted);font-size:0.82rem">Carico prodotto...</p>
+      </div>
+      <div class="spia-err" id="spiaErr"></div>
+    </div>
+
+    <div id="spiaRisultato"></div>
+
+  </div>
+
+  <!-- TAB CERCA (vuota per ora) -->
+  <div class="page" id="page-cerca">
+    <div class="card" style="text-align:center;padding:40px 14px">
+      <p style="color:var(--muted)">Tab Cerca — in arrivo</p>
+    </div>
+  </div>
+
+  <!-- TAB PRODOTTI (vuota per ora) -->
+  <div class="page" id="page-prodotti">
+    <div class="card" style="text-align:center;padding:40px 14px">
+      <p style="color:var(--muted)">Tab Prodotti — in arrivo</p>
+    </div>
+  </div>
+
+  <!-- TAB CSV (vuota per ora) -->
+  <div class="page" id="page-csv">
+    <div class="card" style="text-align:center;padding:40px 14px">
+      <p style="color:var(--muted)">Tab CSV — in arrivo</p>
+    </div>
+  </div>
+
+  <!-- TAB IMPOSTAZIONI (vuota per ora) -->
+  <div class="page" id="page-impost">
+    <div class="card" style="text-align:center;padding:40px 14px">
+      <p style="color:var(--muted)">Tab Impostazioni — in arrivo</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function avvia() {
+  var splash = document.getElementById('splash');
+  splash.style.opacity = '0';
+  setTimeout(function() {
+    splash.style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+  }, 400);
+}
+
+function mostraTab(t) {
+  ['spia','cerca','prodotti','csv','impost'].forEach(function(n) {
+    document.getElementById('tab-' + n).classList.toggle('active', n === t);
+    document.getElementById('page-' + n).classList.toggle('active', n === t);
+  });
+}
+
+// ===== SPIA: LEGGI PRODOTTO EBAY =====
+var EBAY_APPID = 'CarmineR-DROPTOLL-PRD-1bf45b9d5-2fed9b0a';
+
+function itemIdDaUrl(url) {
+  // Link completo: /itm/1234567890 o /itm/titolo/1234567890
+  var m = url.match(/\/itm\/(?:[^/]+\/)?(\d{10,13})/);
+  if (m) return m[1];
+  // Parametro item
+  m = url.match(/[?&]item=(\d+)/);
+  if (m) return m[1];
+  // Solo numeri lunghi
+  m = url.match(/(\d{10,13})/);
+  if (m) return m[1];
+  return null;
+}
+
+
+
+
+async function leggiProdottoEbay() {
+  var link = document.getElementById('spiaEbayLink').value.trim();
+  if (!link) { mostraSpiaErr('Incolla un link eBay.'); return; }
+
+  document.getElementById('spiaRisultato').style.display = 'none';
+  document.getElementById('spiaErr').style.display = 'none';
+  document.getElementById('spiaSpinner').style.display = 'block';
+
+  var itemId = itemIdDaUrl(link);
+
+  // Se non trovato dall'URL, espandi link breve
+  if (!itemId) {
+    document.getElementById('spiaSpinner').querySelector('p').textContent = 'Espando link...';
+    itemId = await risolviLinkEbay(link);
+  }
+
+  if (!itemId) {
+    document.getElementById('spiaSpinner').style.display = 'none';
+    mostraSpiaErr('Link non riconosciuto. Apri il link su eBay e copia dalla barra del browser.');
+    return;
+  }
+
+  try {
+    document.getElementById('spiaSpinner').querySelector('p').textContent = 'Carico prodotto...';
+    var url2 = 'https://open.api.ebay.com/shopping' +
+      '?callname=GetSingleItem' +
+      '&responseencoding=JSON' +
+      '&appid=' + EBAY_APPID +
+      '&siteid=101' +
+      '&version=967' +
+      '&ItemID=' + itemId +
+      '&IncludeSelector=Details,ItemSpecifics,Description,PictureDetails';
+
+    var resp = await fetch(url2);
+    if (!resp.ok) throw new Error('Errore API eBay: ' + resp.status);
+    var data = await resp.json();
+
+    document.getElementById('spiaSpinner').style.display = 'none';
+
+    if (!data.Item) {
+      mostraSpiaErr('Prodotto non trovato. ItemID: ' + itemId);
+      return;
+    }
+
+    renderProdottoSpia(data.Item, itemId);
+
+  } catch(e) {
+    document.getElementById('spiaSpinner').style.display = 'none';
+    mostraSpiaErr('Errore: ' + e.message);
+  }
+}
+
+
+async function risolviLinkEbay(url) {
+  // Usa il Worker Cloudflare che segue i redirect server-side senza CORS
+  try {
+    var workerUrl = 'https://dropcsv.carminefascion1.workers.dev/expand?url=' + encodeURIComponent(url);
+    var r = await fetch(workerUrl);
+    if (r.ok) {
+      var d = await r.json();
+      if (d.itemId) return d.itemId;
+      if (d.finalUrl) {
+        var id = itemIdDaUrl(d.finalUrl);
+        if (id) return id;
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+
+async function leggiProdottoEbay() {
+  var link = document.getElementById('spiaEbayLink').value.trim();
+  if (!link) { mostraSpiaErr('Incolla un link eBay.'); return; }
+
+  document.getElementById('spiaRisultato').style.display = 'none';
+  document.getElementById('spiaErr').style.display = 'none';
+  document.getElementById('spiaSpinner').style.display = 'block';
+
+  var itemId = itemIdDaUrl(link);
+
+  // Se link breve (ebay.us/m/...) prova a risolvere
+  // Espandi link breve per qualsiasi link eBay senza ItemID
+  if (!itemId) {
+    document.getElementById('spiaSpinner').querySelector('p').textContent = 'Espando link...';
+    itemId = await risolviLinkEbay(link);
+  }
+
+  if (!itemId) {
+    document.getElementById('spiaSpinner').style.display = 'none';
+    mostraSpiaErr('Link non riconosciuto. Apri il link su eBay e copia dalla barra del browser.');
+    return;
+  }
+
+  try {
+    var url2 = 'https://open.api.ebay.com/shopping' +
+      '?callname=GetSingleItem' +
+      '&responseencoding=JSON' +
+      '&appid=' + EBAY_APPID +
+      '&siteid=101' +
+      '&version=967' +
+      '&ItemID=' + itemId +
+      '&IncludeSelector=Details,ItemSpecifics,Description,PictureDetails';
+
+    var resp = await fetch(url2);
+    if (!resp.ok) throw new Error('Errore API eBay: ' + resp.status);
+    var data = await resp.json();
+
+    document.getElementById('spiaSpinner').style.display = 'none';
+
+    if (!data.Item) {
+      mostraSpiaErr('Prodotto non trovato. ItemID: ' + itemId);
+      return;
+    }
+
+    renderProdottoSpia(data.Item, itemId);
+
+  } catch(e) {
+    document.getElementById('spiaSpinner').style.display = 'none';
+    mostraSpiaErr('Errore: ' + e.message + '. Prova con il link completo della pagina eBay.');
+  }
+}
+
+function mostraSpiaErr(msg) {
+  var el = document.getElementById('spiaErr');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function renderProdottoSpia(item, itemId) {
+  var box = document.getElementById('spiaRisultato');
+  var html = '<div class="ebay-prod-card">';
+
+  // FOTO
+  var foto = [];
+  if (item.PictureURL) {
+    if (Array.isArray(item.PictureURL)) foto = item.PictureURL;
+    else foto = [item.PictureURL];
+  }
+  if (foto.length > 0) {
+    html += '<div class="ebay-prod-foto">';
+    foto.forEach(function(u) {
+      html += '<img src="' + u + '" onerror=\"this.style.display=\'none\'\">';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="ebay-prod-body">';
+
+  // TITOLO
+  html += '<div class="ebay-field-lbl">Titolo</div>';
+  html += '<div class="ebay-field-val copyable" onclick="copiaTestoSpia(this)">' +
+    '<span>' + (item.Title || '') + '</span>' +
+    '<button class="btn-copia-campo">Copia</button>' +
+  '</div>';
+
+  // PREZZO
+  if (item.ConvertedCurrentPrice) {
+    var prezzo = item.ConvertedCurrentPrice.Value + ' ' + item.ConvertedCurrentPrice.CurrencyID;
+    html += '<div class="ebay-field-lbl">Prezzo</div>';
+    html += '<div class="ebay-field-val copyable" onclick="copiaTestoSpia(this)">' +
+      '<span>' + prezzo + '</span>' +
+      '<button class="btn-copia-campo">Copia</button>' +
+    '</div>';
+  }
+
+  // CATEGORIA
+  if (item.PrimaryCategoryName) {
+    html += '<div class="ebay-field-lbl">Categoria</div>';
+    html += '<div class="ebay-field-val copyable" onclick="copiaTestoSpia(this)">' +
+      '<span>' + item.PrimaryCategoryName + '</span>' +
+      '<button class="btn-copia-campo">Copia</button>' +
+    '</div>';
+  }
+
+  // SPECIFICHE
+  if (item.ItemSpecifics && item.ItemSpecifics.NameValueList) {
+    var specs = item.ItemSpecifics.NameValueList;
+    if (!Array.isArray(specs)) specs = [specs];
+    html += '<div class="ebay-field-lbl">Specifiche (' + specs.length + ')</div>';
+    html += '<div class="ebay-specs-grid">';
+    specs.forEach(function(s) {
+      var val = Array.isArray(s.Value) ? s.Value.join(', ') : s.Value;
+      html += '<div class="ebay-spec-item">' +
+        '<div class="ebay-spec-key">' + s.Name + '</div>' +
+        '<div class="ebay-spec-val">' + val + '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  // DESCRIZIONE
+  if (item.Description) {
+    // Rimuovi HTML dalla descrizione
+    var descTesto = item.Description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 1000);
+    html += '<div class="ebay-field-lbl">Descrizione</div>';
+    html += '<div class="ebay-desc-box copyable" onclick="copiaTestoSpia(this)">' +
+      '<span>' + descTesto + '</span>' +
+    '</div>';
+    html += '<button class="btn btn-ghost" onclick="copiaDescSpia()" style="margin-top:6px">Copia descrizione</button>';
+    window._spiaDesc = descTesto;
+  }
+
+  // LINK ORIGINALE
+  html += '<div class="ebay-field-lbl">Link prodotto eBay</div>';
+  var linkItem = 'https://www.ebay.it/itm/' + itemId;
+  html += '<div class="ebay-field-val copyable" onclick="copiaTestoSpia(this)">' +
+    '<span>' + linkItem + '</span>' +
+    '<button class="btn-copia-campo">Copia</button>' +
+  '</div>';
+
+  html += '</div></div>';
+
+  box.innerHTML = html;
+  box.style.display = 'block';
+  box.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+function copiaTestoSpia(el) {
+  var span = el.querySelector('span');
+  if (!span) return;
+  var testo = span.textContent;
+  try {
+    var tmp = document.createElement('textarea');
+    tmp.value = testo;
+    tmp.style.position = 'fixed'; tmp.style.top = '0'; tmp.style.left = '0';
+    document.body.appendChild(tmp);
+    tmp.select();
+    document.execCommand('copy');
+    document.body.removeChild(tmp);
+    // Feedback visivo
+    var btn = el.querySelector('.btn-copia-campo');
+    if (btn) { btn.textContent = 'Copiato!'; setTimeout(function(){ btn.textContent = 'Copia'; }, 1500); }
+  } catch(e) {}
+}
+
+function copiaDescSpia() {
+  if (!window._spiaDesc) return;
+  try {
+    var tmp = document.createElement('textarea');
+    tmp.value = window._spiaDesc;
+    tmp.style.position = 'fixed'; tmp.style.top = '0'; tmp.style.left = '0';
+    document.body.appendChild(tmp);
+    tmp.select();
+    document.execCommand('copy');
+    document.body.removeChild(tmp);
+    mostraNotif('Descrizione copiata!', 'ok');
+  } catch(e) {}
+}
+
+function mostraNotif(msg, tipo) {
+  var el = document.getElementById('notif');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'notif';
+    el.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;border:1px solid #2a2a2a;border-radius:12px;padding:11px 20px;font-size:0.82rem;z-index:9998;display:none;white-space:nowrap;max-width:90vw;text-align:center';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.borderColor = tipo === 'ok' ? '#2ecc71' : '#e74c3c';
+  el.style.color = tipo === 'ok' ? '#2ecc71' : '#e74c3c';
+  el.style.display = 'block';
+  clearTimeout(window._nt);
+  window._nt = setTimeout(function(){ el.style.display = 'none'; }, 2500);
+}
+</script>
+</body>
+</html>
