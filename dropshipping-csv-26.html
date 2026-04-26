@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DropCSV v26</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --s1: #111111;
+  --s2: #1a1a1a;
+  --s3: #222222;
+  --border: #2a2a2a;
+  --text: #f0f0f0;
+  --muted: #777777;
+  --accent: #f0a500;
+  --green: #2ecc71;
+  --red: #e74c3c;
+  --blue: #3498db;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* SPLASH */
+#splash {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999; transition: opacity 0.4s;
+}
+#splash h1 { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; letter-spacing: -1px; }
+#splash h1 span { color: var(--accent); }
+#splash p { color: var(--muted); margin-top: 8px; font-size: 0.82rem; }
+.splash-btn {
+  margin-top: 32px; background: var(--accent); color: #000;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem;
+  padding: 15px 48px; border: none; border-radius: 50px; cursor: pointer;
+  letter-spacing: 0.5px;
+}
+
+/* APP */
+.app { display: none; flex-direction: column; min-height: 100vh; }
+.app.visible { display: flex; }
+
+/* TABS */
+.tabs {
+  display: flex; background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.tab {
+  flex: 1; padding: 14px 4px; text-align: center;
+  font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700;
+  color: var(--muted); cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all 0.2s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.badge {
+  display: inline-block; background: var(--red); color: #fff;
+  font-size: 0.6rem; font-family: 'Syne', sans-serif; font-weight: 700;
+  padding: 1px 5px; border-radius: 8px; margin-left: 3px; vertical-align: middle;
+}
+
+/* PAGES */
+.page { display: none; padding: 14px; padding-bottom: 30px; }
+.page.active { display: block; }
+
+/* CARD */
+.card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px; margin-bottom: 12px;
+}
+.card-label {
+  font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--accent); margin-bottom: 10px;
+}
+
+/* INPUTS */
+.input-field {
+  width: 100%; background: var(--s2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; color: var(--text);
+  font-size: 0.88rem; font-family: 'DM Sans', sans-serif;
+  outline: none; resize: none;
+}
+.input-field:focus { border-color: var(--accent); }
+.input-field::placeholder { color: var(--muted); }
+
+/* BUTTONS */
+.btn {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem;
+  cursor: pointer; margin-top: 10px; transition: opacity 0.15s;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-orange { background: var(--accent); color: #000; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn-red { background: var(--red); color: #fff; }
+
+/* SPINNER */
+.spinner-wrap { text-align: center; padding: 28px 0; }
+.spinner {
+  width: 30px; height: 30px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin: 0 auto 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner-msg { font-size: 0.82rem; color: var(--muted); }
+
+/* ERROR BOX */
+.err-box {
+  display: none; background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3);
+  border-radius: 10px; padding: 12px; color: var(--red);
+  font-size: 0.82rem; margin-top: 10px; line-height: 1.5;
+}
+
+/* STATS */
+.stats-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+.stat-chip { flex: 1; background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; }
+.stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; color: var(--accent); }
+.stat-lbl { font-size: 0.62rem; color: var(--muted); margin-top: 2px; }
+
+/* PRODOTTO CARD */
+.prod-card {
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 14px; margin-bottom: 12px; overflow: hidden;
+}
+.prod-header { display: flex; gap: 10px; align-items: flex-start; padding: 12px; }
+.prod-thumb {
+  width: 60px; height: 60px; border-radius: 10px; object-fit: cover;
+  flex-shrink: 0; background: var(--s3); border: 1px solid var(--border);
+}
+.prod-thumb-empty {
+  width: 60px; height: 60px; border-radius: 10px; flex-shrink: 0;
+  background: var(--s3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 1.4rem;
+}
+.prod-info { flex: 1; min-width: 0; }
+.prod-titolo {
+  font-size: 0.82rem; font-weight: 600; line-height: 1.4; margin-bottom: 4px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.prod-asin { font-size: 0.68rem; color: var(--muted); font-family: monospace; margin-bottom: 3px; }
+.prod-amz-prezzo { font-size: 0.72rem; color: var(--muted); }
+.prod-amz-prezzo span { color: var(--accent); font-weight: 700; }
+.prod-actions { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+.btn-del {
+  background: transparent; border: 1px solid var(--border); border-radius: 7px;
+  color: var(--red); font-size: 0.75rem; cursor: pointer; padding: 6px 9px;
+  font-weight: 700; font-family: 'Syne', sans-serif;
+}
+.btn-info {
+  background: var(--s3); border: 1px solid var(--border); border-radius: 7px;
+  color: var(--accent); font-size: 0.68rem; cursor: pointer; padding: 6px 8px;
+  font-family: 'Syne', sans-serif; font-weight: 700;
+}
+
+/* PREZZO ROW */
+.prezzo-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px 10px;
+}
+.prezzo-eur { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; color: var(--accent); flex-shrink: 0; }
+.prezzo-input {
+  flex: 1; background: var(--s1); border: 1px solid var(--border);
+  border-radius: 9px; padding: 10px 12px; color: var(--text);
+  font-size: 0.95rem; font-family: 'Syne', sans-serif; font-weight: 700;
+  outline: none; text-align: center;
+}
+.prezzo-input:focus { border-color: var(--accent); }
+.prezzo-stato { font-size: 0.7rem; padding: 0 12px 12px; }
+.prezzo-stato.ok { color: var(--green); }
+.prezzo-stato.ko { color: var(--red); }
+
+/* DETTAGLI PANEL */
+.det-panel {
+  display: none; border-top: 1px solid var(--border);
+  padding: 14px; background: var(--bg);
+}
+.det-panel.aperto { display: block; }
+.det-label {
+  font-family: 'Syne', sans-serif; font-size: 0.66rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px; color: var(--accent);
+  margin-top: 14px; margin-bottom: 6px;
+}
+.det-label:first-child { margin-top: 0; }
+.det-text {
+  background: var(--s2); border: 1px solid var(--border); border-radius: 9px;
+  padding: 10px; font-size: 0.8rem; color: var(--text); line-height: 1.6;
+  max-height: 200px; overflow-y: auto; word-break: break-word;
+}
+.det-text-edit {
+  background: var(--s2); border: 1px solid var(--border); border-radius: 9px;
+  padding: 10px; font-size: 0.8rem; color: var(--text); line-height: 1.6;
+  width: 100%; outline: none; resize: vertical; min-height: 80px;
+  font-family: 'DM Sans', sans-serif;
+}
+.det-text-edit:focus { border-color: var(--accent); }
+.det-prezzi-row { display: flex; gap: 8px; }
+.det-prezzo-box {
+  flex: 1; background: var(--s2); border: 1px solid var(--border);
+  border-radius: 9px; padding: 10px; text-align: center;
+}
+.det-prezzo-lbl { font-size: 0.64rem; color: var(--muted); margin-bottom: 3px; }
+.det-prezzo-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; }
+.det-foto-scroll { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; }
+.det-foto-scroll img {
+  width: 75px; height: 75px; object-fit: cover; border-radius: 8px;
+  flex-shrink: 0; border: 1px solid var(--border);
+}
+.det-specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.det-spec { background: var(--s2); border-radius: 7px; padding: 8px; }
+.det-spec-key { font-size: 0.62rem; color: var(--muted); margin-bottom: 2px; }
+.det-spec-val { font-size: 0.76rem; color: var(--text); }
+.btn-salva-modifica {
+  background: var(--green); color: #fff; border: none; border-radius: 8px;
+  padding: 8px 14px; font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 0.78rem; cursor: pointer; margin-top: 6px; width: 100%;
+}
+
+/* CSV TAB */
+.csv-riep-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+}
+.csv-riep-row:last-child { border-bottom: none; }
+.csv-riep-lbl { color: var(--muted); }
+.csv-riep-val { font-family: 'Syne', sans-serif; font-weight: 700; }
+.impost-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.impost-row:last-child { border-bottom: none; }
+.impost-lbl { font-size: 0.85rem; }
+.impost-input {
+  width: 70px; background: var(--s2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 8px; color: var(--text); text-align: center;
+  font-size: 0.88rem; outline: none;
+}
+.impost-select {
+  background: var(--s2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 8px; color: var(--text); font-size: 0.8rem; outline: none;
+}
+.csv-ok-box {
+  display: none; background: rgba(46,204,113,0.07);
+  border: 1px solid rgba(46,204,113,0.3); border-radius: 14px; padding: 16px; margin-top: 12px;
+}
+.csv-ok-titolo { color: var(--green); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 8px; }
+.csv-testo-area {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px; color: var(--muted);
+  font-family: monospace; font-size: 0.6rem; height: 80px; resize: none; outline: none;
+}
+
+/* NOTIFICA */
+.notif {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--s3); border: 1px solid var(--border);
+  border-radius: 12px; padding: 11px 20px; font-size: 0.82rem;
+  z-index: 9998; display: none; white-space: nowrap;
+  max-width: 90vw; text-align: center;
+}
+.notif.show { display: block; }
+.notif.ok { border-color: var(--green); color: var(--green); }
+.notif.err { border-color: var(--red); color: var(--red); }
+
+/* SETTINGS */
+.set-row { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.set-row:last-child { border-bottom: none; }
+.set-lbl { font-size: 0.72rem; color: var(--muted); margin-bottom: 5px; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <h1>Drop<span>CSV</span></h1>
+  <p>Generatore CSV per eBay — v25</p>
+  <button class="splash-btn" onclick="avvia()">&#9654; ENTRA</button>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" id="tab-spia" onclick="mostraTab('spia')">Spia</div>
+    <div class="tab" id="tab-cerca" onclick="mostraTab('cerca')">Cerca</div>
+    <div class="tab" id="tab-prodotti" onclick="mostraTab('prodotti')">Prodotti <span class="badge" id="badgeProd">0</span></div>
+    <div class="tab" id="tab-csv" onclick="mostraTab('csv')">CSV</div>
+    <div class="tab" id="tab-impost" onclick="mostraTab('impost')">Set</div>
+  </div>
+
+  <!-- TAB SPIA -->
+  <div class="page" id="page-spia">
+    <div class="card">
+      <div class="card-label">Passo 1 — Vai su carugno-shop</div>
+      <div style="background:var(--s2);border-radius:10px;padding:12px;font-size:0.82rem;color:var(--muted);line-height:1.8;margin-bottom:12px">
+        1 — Clicca il pulsante qui sotto<br>
+        2 — Vai su <strong style="color:var(--text)">Oggetti venduti</strong><br>
+        3 — <strong style="color:var(--text)">Copia il titolo</strong> del prodotto<br>
+        4 — Torna qui e incollalo sotto
+      </div>
+      <a href="https://www.ebay.it/sch/i.html?_ssn=carugno-shop&_sop=13" target="_blank"
+        style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#000;font-family:'Syne',sans-serif;font-weight:700;padding:14px;border-radius:12px;text-decoration:none;font-size:0.9rem">
+        Apri carugno-shop — Oggetti venduti
+      </a>
+    </div>
+    <div class="card">
+      <div class="card-label">Passo 2 — Cerca su Amazon</div>
+      <form action="https://www.amazon.it/s" method="GET" target="_blank">
+        <input type="text" name="k" id="spiaSearch" class="input-field" placeholder="Incolla il titolo del prodotto..." style="margin-bottom:10px">
+        <button type="submit" class="btn btn-orange" style="margin-top:0">Cerca su Amazon</button>
+      </form>
+      <p style="font-size:0.76rem;color:var(--muted);text-align:center;margin-top:10px;line-height:1.5">
+        Trova il prodotto su Amazon, copia il link e vai nella tab <strong style="color:var(--accent)">Cerca</strong>
+      </p>
+    </div>
+    <div class="card">
+      <div class="card-label">Passo 3 — Usa il link Amazon</div>
+      <div style="background:var(--s2);border-radius:10px;padding:12px;font-size:0.82rem;color:var(--muted);line-height:1.8;margin-bottom:12px">
+        1 — <strong style="color:var(--text)">Copia il link</strong> dalla barra del browser<br>
+        2 — Vai nella tab <strong style="color:var(--accent)">Cerca</strong><br>
+        3 — Incolla il link e premi Cerca prodotti
+      </div>
+      <button class="btn btn-ghost" onclick="mostraTab('cerca')" style="margin-top:0">Vai alla tab Cerca</button>
+    </div>
+  </div>
+
+  <!-- TAB CERCA -->
+  <div class="page" id="page-cerca">
+    <div class="card">
+      <div class="card-label">Cerca prodotti Amazon</div>
+      <p style="font-size:0.8rem;color:var(--muted);line-height:1.6;margin-bottom:10px">
+        Incolla uno o piu link Amazon (anche amzn.eu) oppure codici ASIN, uno per riga.
+      </p>
+      <textarea id="inputLinks" class="input-field" rows="6"
+        placeholder="https://amzn.eu/d/abc123&#10;B08N5WRWNW&#10;https://www.amazon.it/dp/B0ABC..."></textarea>
+      <button class="btn btn-orange" id="btnCerca" onclick="cercaProdotti()">Cerca prodotti</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('inputLinks').value=''">Pulisci</button>
+    </div>
+
+    <div id="loadCerca" style="display:none">
+      <div class="spinner-wrap">
+        <div class="spinner"></div>
+        <p class="spinner-msg" id="loadMsg">Ricerca in corso...</p>
+      </div>
+    </div>
+
+    <div class="err-box" id="errCerca"></div>
+  </div>
+
+  <!-- TAB PRODOTTI -->
+  <div class="page" id="page-prodotti">
+    <div id="prodEmpty" class="card" style="text-align:center;padding:32px 14px">
+      <p style="font-size:2rem;margin-bottom:10px">&#x1F4E6;</p>
+      <p style="color:var(--muted);line-height:1.7">Nessun prodotto.<br>Vai in <strong style="color:var(--accent)">Cerca</strong> e inserisci i link Amazon.</p>
+    </div>
+    <div id="prodContainer" style="display:none">
+      <div class="stats-bar">
+        <div class="stat-chip">
+          <div class="stat-num" id="statTot">0</div>
+          <div class="stat-lbl">Totale</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-num" id="statOk" style="color:var(--green)">0</div>
+          <div class="stat-lbl">Con prezzo</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-num" id="statNo" style="color:var(--red)">0</div>
+          <div class="stat-lbl">Senza prezzo</div>
+        </div>
+      </div>
+      <div id="prodList"></div>
+      <button class="btn btn-orange" onclick="mostraTab('csv')">Vai a CSV</button>
+      <button class="btn btn-ghost" onclick="svuotaLista()">Svuota lista</button>
+    </div>
+  </div>
+
+  <!-- TAB CSV -->
+  <div class="page" id="page-csv">
+    <div id="csvEmpty" class="card" style="text-align:center;padding:32px 14px">
+      <p style="color:var(--muted);line-height:1.7">Nessun prodotto con prezzo.<br>Vai in <strong style="color:var(--accent)">Prodotti</strong> e inserisci i prezzi.</p>
+    </div>
+    <div id="csvContainer" style="display:none">
+      <div class="card">
+        <div class="card-label">Riepilogo</div>
+        <div class="csv-riep-row">
+          <span class="csv-riep-lbl">Prodotti totali</span>
+          <span class="csv-riep-val" id="riepTot">0</span>
+        </div>
+        <div class="csv-riep-row">
+          <span class="csv-riep-lbl">Con prezzo eBay</span>
+          <span class="csv-riep-val" style="color:var(--green)" id="riepOk">0</span>
+        </div>
+        <div class="csv-riep-row">
+          <span class="csv-riep-lbl">Senza prezzo</span>
+          <span class="csv-riep-val" style="color:var(--red)" id="riepNo">0</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Impostazioni CSV</div>
+        <div class="impost-row">
+          <span class="impost-lbl">Quantita per annuncio</span>
+          <input type="number" id="csvQta" class="impost-input" value="5" min="1" max="99">
+        </div>
+        <div class="impost-row">
+          <span class="impost-lbl">Condizione</span>
+          <select id="csvCond" class="impost-select">
+            <option value="1000">Nuovo</option>
+            <option value="3000">Usato</option>
+          </select>
+        </div>
+        <div class="impost-row">
+          <span class="impost-lbl">Sponsorizzazione %</span>
+          <input type="number" id="csvSponsor" class="impost-input" value="2.1" min="1" max="20" step="0.1">
+        </div>
+      </div>
+      <button class="btn btn-orange" onclick="generaCSV()">Genera e scarica CSV</button>
+      <div class="csv-ok-box" id="csvOkBox">
+        <div class="csv-ok-titolo">CSV generato!</div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px;line-height:1.5">
+          Se il download non parte automaticamente, copia il testo qui sotto e salvalo come file .csv
+        </p>
+        <textarea class="csv-testo-area" id="csvTesto" readonly></textarea>
+        <button class="btn btn-ghost" onclick="copiaCSV()" style="margin-top:8px">Copia CSV</button>
+        <a href="https://www.ebay.it/sh/reports/uploads" target="_blank"
+          style="display:block;margin-top:10px;padding:12px;background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.3);border-radius:10px;color:var(--blue);text-decoration:none;font-size:0.84rem;font-weight:600;text-align:center">
+          Apri eBay Seller Hub
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB IMPOSTAZIONI -->
+  <div class="page" id="page-impost">
+    <div class="card">
+      <div class="card-label">Chiave RapidAPI</div>
+      <p style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;line-height:1.5">
+        La chiave e gia inserita di default. Cambiala solo se necessario.
+      </p>
+      <div class="set-row">
+        <div class="set-lbl">Chiave API</div>
+        <input type="text" id="apiKeyInput" class="input-field" placeholder="Chiave RapidAPI...">
+      </div>
+      <button class="btn btn-orange" onclick="salvaApiKey()">Salva chiave</button>
+    </div>
+    <div class="card">
+      <div class="card-label">Profili eBay</div>
+      <div class="set-row">
+        <div class="set-lbl">Profilo spedizione</div>
+        <input type="text" id="profSped" class="input-field" value="Spedizione AMZ Italia">
+      </div>
+      <div class="set-row">
+        <div class="set-lbl">Profilo reso</div>
+        <input type="text" id="profReso" class="input-field" value="reso AMZ ITALIA">
+      </div>
+      <div class="set-row">
+        <div class="set-lbl">Profilo pagamento</div>
+        <input type="text" id="profPag" class="input-field" value="EBAY PAGAMENTO ITALIA">
+      </div>
+      <button class="btn btn-orange" onclick="salvaProfili()">Salva profili</button>
+    </div>
+    <div class="card">
+      <div class="card-label">Dati</div>
+      <button class="btn btn-ghost" onclick="svuotaTutto()">Cancella tutti i prodotti</button>
+    </div>
+  </div>
+
+</div><!-- fine app -->
+
+<div class="notif" id="notif"></div>
+
+<script>
+// ===== CONFIGURAZIONE =====
+var CHIAVE_API = localStorage.getItem('csv_api_key') || 'db341a42c3msh710211c04d29435p1d696ajsna5bbcaa4efc7';
+var prodotti = JSON.parse(localStorage.getItem('csv_prod_v26') || '[]');
+
+// ===== AVVIO =====
+function avvia() {
+  var splash = document.getElementById('splash');
+  splash.style.opacity = '0';
+  setTimeout(function() {
+    splash.style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    caricaImpost();
+    aggiornaUI();
+  }, 400);
+}
+
+// ===== TABS =====
+function mostraTab(t) {
+  ['spia','cerca','prodotti','csv','impost'].forEach(function(n) {
+    document.getElementById('tab-'+n).classList.toggle('active', n === t);
+    document.getElementById('page-'+n).classList.toggle('active', n === t);
+  });
+  if (t === 'prodotti') renderProdotti();
+  if (t === 'csv') renderCSV();
+  if (t === 'spia') {};
+}
+
+// ===== NOTIFICA =====
+function notif(msg, tipo) {
+  var el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = 'notif show' + (tipo ? ' ' + tipo : '');
+  clearTimeout(window._nt);
+  window._nt = setTimeout(function() { el.className = 'notif'; }, 3000);
+}
+
+// ===== SALVATAGGIO =====
+function salva() {
+  localStorage.setItem('csv_prod_v26', JSON.stringify(prodotti));
+}
+
+function aggiornaUI() {
+  document.getElementById('badgeProd').textContent = prodotti.length;
+}
+
+// ===== ESTRAI ASIN =====
+function asinDaUrl(url) {
+  var pattern = [
+    /\/dp\/([A-Z0-9]{10})/i,
+    /\/gp\/product\/([A-Z0-9]{10})/i,
+    /[?&]asin=([A-Z0-9]{10})/i,
+    /\/([A-Z0-9]{10})(?:[/?]|$)/i
+  ];
+  for (var i = 0; i < pattern.length; i++) {
+    var m = url.match(pattern[i]);
+    if (m) return m[1].toUpperCase();
+  }
+  return null;
+}
+
+async function espandiLink(url) {
+  // Prova a espandere link brevi tramite fetch
+  try {
+    var r = await fetch('https://dropcsv.carminefascion1.workers.dev/expand?url=' + encodeURIComponent(url));
+    if (r.ok) {
+      var d = await r.json();
+      if (d && d.asin) return d.asin;
+      if (d && d.url) return asinDaUrl(d.url);
+    }
+  } catch(e) {}
+  // Prova a estrarre ASIN direttamente dall'URL anche se breve
+  return asinDaUrl(url);
+}
+
+async function estraiAsins(testo) {
+  var asins = [];
+  var righe = testo.split('\n');
+  for (var i = 0; i < righe.length; i++) {
+    var riga = righe[i].trim();
+    if (!riga) continue;
+    // ASIN diretto (10 caratteri alfanumerici)
+    if (/^[A-Z0-9]{10}$/i.test(riga)) {
+      asins.push(riga.toUpperCase());
+      continue;
+    }
+    // Link Amazon
+    if (riga.includes('amazon.') || riga.includes('amzn.')) {
+      var url = riga.startsWith('http') ? riga : 'https://' + riga;
+      var asin = asinDaUrl(url);
+      if (asin) { asins.push(asin); continue; }
+      // Link breve — espandi
+      document.getElementById('loadMsg').textContent = 'Espando link ' + (i+1) + '...';
+      var risolto = await espandiLink(url);
+      if (risolto) asins.push(risolto);
+    }
+  }
+  // Rimuovi duplicati
+  return asins.filter(function(v, i, a) { return a.indexOf(v) === i; });
+}
+
+function pulisciTitolo(t) {
+  if (!t) return '';
+  t = t.replace(/\bamazon\b/gi, '').replace(/\bprime\b/gi, '');
+  t = t.replace(/\[.*?\]/g, '').replace(/\s+/g, ' ').trim();
+  if (t.length > 80) t = t.substring(0, 77).trim() + '...';
+  return t;
+}
+
+// ===== FETCH AMAZON =====
+async function fetchAmazon(asin) {
+  var providers = [
+    {
+      url: 'https://real-time-amazon-data.p.rapidapi.com/product-details?asin=' + asin + '&country=IT',
+      host: 'real-time-amazon-data.p.rapidapi.com',
+      parse: function(j) {
+        var d = j.data || j;
+        if (!d || !d.product_title) return null;
+        var imgs = [];
+        if (d.product_photos && d.product_photos.length) imgs = d.product_photos;
+        else if (d.product_photo) imgs = [d.product_photo];
+        var prezzo = d.product_price ? String(d.product_price).replace(/[^\d.,]/g,'').replace(',','.') : '';
+        var specs = [];
+        if (d.product_information) {
+          Object.keys(d.product_information).slice(0, 12).forEach(function(k) {
+            var v = d.product_information[k];
+            if (k && v && String(v).length < 120) specs.push({n: k, v: String(v)});
+          });
+        }
+        var desc = d.product_description || d.about_product || '';
+        return {titolo: d.product_title, imgs: imgs, prezzo: prezzo, specs: specs, desc: desc};
+      }
+    },
+    {
+      url: 'https://amazon-online-data-api.p.rapidapi.com/product?asins=' + asin + '&geo=IT',
+      host: 'amazon-online-data-api.p.rapidapi.com',
+      parse: function(j) {
+        var d = (j.data && j.data[0]) || j[0] || j.data || j;
+        if (!d || !d.title) return null;
+        var imgs = d.images || (d.image ? [d.image] : []);
+        var prezzo = d.price ? String(d.price).replace(/[^\d.,]/g,'').replace(',','.') : '';
+        var specs = [];
+        if (d.specifications) {
+          d.specifications.slice(0, 12).forEach(function(s) {
+            if (s.name && s.value) specs.push({n: s.name, v: String(s.value)});
+          });
+        }
+        var desc = d.description || '';
+        return {titolo: d.title, imgs: imgs, prezzo: prezzo, specs: specs, desc: desc};
+      }
+    }
+  ];
+
+  for (var p = 0; p < providers.length; p++) {
+    try {
+      var resp = await fetch(providers[p].url, {
+        headers: {
+          'X-RapidAPI-Key': CHIAVE_API,
+          'X-RapidAPI-Host': providers[p].host
+        }
+      });
+      if (!resp.ok) continue;
+      var json = await resp.json();
+      var parsed = providers[p].parse(json);
+      if (parsed && parsed.titolo) {
+        return {
+          asin: asin,
+          titolo: pulisciTitolo(parsed.titolo),
+          titoloOrig: parsed.titolo,
+          titoloEbay: pulisciTitolo(parsed.titolo),
+          prezzoAmz: parsed.prezzo,
+          prezzoEbay: '',
+          imgs: parsed.imgs || [],
+          specs: parsed.specs || [],
+          desc: parsed.desc || ''
+        };
+      }
+    } catch(e) {}
+  }
+  return null;
+}
+
+// ===== CERCA PRODOTTI =====
+async function cercaProdotti() {
+  var testo = document.getElementById('inputLinks').value.trim();
+  if (!testo) { notif('Incolla almeno un link o ASIN', 'err'); return; }
+
+  document.getElementById('errCerca').style.display = 'none';
+  document.getElementById('loadCerca').style.display = 'block';
+  document.getElementById('btnCerca').disabled = true;
+  document.getElementById('loadMsg').textContent = 'Analisi link...';
+
+  var asins = await estraiAsins(testo);
+
+  if (asins.length === 0) {
+    document.getElementById('loadCerca').style.display = 'none';
+    document.getElementById('btnCerca').disabled = false;
+    document.getElementById('errCerca').style.display = 'block';
+    document.getElementById('errCerca').textContent = 'Nessun ASIN trovato. Controlla i link inseriti.';
+    return;
+  }
+
+  var trovati = 0;
+  var duplicati = 0;
+  var falliti = 0;
+
+  for (var i = 0; i < asins.length; i++) {
+    var asin = asins[i];
+    document.getElementById('loadMsg').textContent = 'Prodotto ' + (i+1) + ' di ' + asins.length + ' (' + asin + ')';
+
+    // Salta duplicati
+    if (prodotti.find(function(p) { return p.asin === asin; })) {
+      duplicati++;
+      continue;
+    }
+
+    try {
+      var dati = await fetchAmazon(asin);
+      if (dati) {
+        prodotti.push(dati);
+        trovati++;
+      } else {
+        falliti++;
+      }
+    } catch(e) {
+      falliti++;
+    }
+
+    // Pausa tra una richiesta e l'altra
+    if (i < asins.length - 1) {
+      await new Promise(function(r) { setTimeout(r, 500); });
+    }
+  }
+
+  salva();
+  aggiornaUI();
+  document.getElementById('loadCerca').style.display = 'none';
+  document.getElementById('btnCerca').disabled = false;
+
+  if (trovati > 0) {
+    document.getElementById('inputLinks').value = '';
+    var msg = trovati + ' prodott' + (trovati === 1 ? 'o aggiunto' : 'i aggiunti');
+    if (duplicati > 0) msg += ', ' + duplicati + ' gia presenti';
+    if (falliti > 0) msg += ', ' + falliti + ' falliti';
+    notif(msg, 'ok');
+    mostraTab('prodotti');
+  } else {
+    var errMsg = 'Nessun prodotto trovato.';
+    if (falliti > 0) errMsg += ' Chiave API esaurita o non valida.';
+    if (duplicati > 0) errMsg += ' ' + duplicati + ' gia presenti.';
+    document.getElementById('errCerca').style.display = 'block';
+    document.getElementById('errCerca').textContent = errMsg;
+  }
+}
+
+// ===== RENDER PRODOTTI =====
+function renderProdotti() {
+  var empty = document.getElementById('prodEmpty');
+  var container = document.getElementById('prodContainer');
+  var list = document.getElementById('prodList');
+
+  if (prodotti.length === 0) {
+    empty.style.display = 'block';
+    container.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  container.style.display = 'block';
+
+  var conPrezzo = prodotti.filter(function(p) { return p.prezzoEbay && parseFloat(p.prezzoEbay) > 0; }).length;
+  document.getElementById('statTot').textContent = prodotti.length;
+  document.getElementById('statOk').textContent = conPrezzo;
+  document.getElementById('statNo').textContent = prodotti.length - conPrezzo;
+
+  list.innerHTML = '';
+
+  prodotti.forEach(function(prod, idx) {
+    var div = document.createElement('div');
+    div.className = 'prod-card';
+
+    var imgHtml = (prod.imgs && prod.imgs[0])
+      ? '<img class="prod-thumb" src="' + prod.imgs[0] + '" onerror="this.style.display=\'none\'">'
+      : '<div class="prod-thumb-empty">&#x1F4E6;</div>';
+
+    var amzHtml = prod.prezzoAmz
+      ? '<div class="prod-amz-prezzo">Amazon: <span>' + prod.prezzoAmz + ' EUR</span></div>'
+      : '';
+
+    var ok = prod.prezzoEbay && parseFloat(prod.prezzoEbay) > 0;
+
+    div.innerHTML =
+      '<div class="prod-header">' +
+        imgHtml +
+        '<div class="prod-info">' +
+          '<div class="prod-titolo">' + (prod.titoloEbay || prod.titolo || '') + '</div>' +
+          '<div class="prod-asin">' + prod.asin + '</div>' +
+          amzHtml +
+        '</div>' +
+        '<div class="prod-actions">' +
+          '<button class="btn-del" data-idx="' + idx + '">X</button>' +
+          '<button class="btn-info" data-idx="' + idx + '">INFO</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="prezzo-row">' +
+        '<span class="prezzo-eur">EUR</span>' +
+        '<input type="number" class="prezzo-input" data-idx="' + idx + '" placeholder="Prezzo eBay" value="' + (prod.prezzoEbay || '') + '" min="0" step="0.01">' +
+      '</div>' +
+      '<div class="prezzo-stato ' + (ok ? 'ok' : 'ko') + '" id="stato-' + idx + '">' +
+        (ok ? 'Prezzo inserito' : 'Inserisci il prezzo eBay') +
+      '</div>' +
+      '<div class="det-panel" id="det-' + idx + '">' +
+        costruisciDettagli(prod, idx) +
+      '</div>';
+
+    // Event: elimina
+    div.querySelector('.btn-del').addEventListener('click', function() {
+      rimuoviProd(parseInt(this.getAttribute('data-idx')));
+    });
+
+    // Event: info toggle
+    div.querySelector('.btn-info').addEventListener('click', function() {
+      var btn = this;
+      var det = document.getElementById('det-' + this.getAttribute('data-idx'));
+      if (!det) return;
+      var aperto = det.classList.toggle('aperto');
+      btn.textContent = aperto ? 'CHIUDI' : 'INFO';
+    });
+
+    // Event: prezzo
+    div.querySelector('.prezzo-input').addEventListener('input', function() {
+      aggiornaPrezzoEbay(parseInt(this.getAttribute('data-idx')), this.value);
+    });
+
+    list.appendChild(div);
+  });
+}
+
+function costruisciDettagli(prod, idx) {
+  var html = '';
+
+  // Foto
+  if (prod.imgs && prod.imgs.length > 0) {
+    html += '<div class="det-label">FOTO (' + prod.imgs.length + ')</div>';
+    html += '<div class="det-foto-scroll">';
+    prod.imgs.slice(0, 12).forEach(function(url) {
+      html += '<img src="' + url + '" onerror="this.style.display=\'none\'">';
+    });
+    html += '</div>';
+  }
+
+  // Prezzi
+  html += '<div class="det-label">PREZZI</div>';
+  html += '<div class="det-prezzi-row">' +
+    '<div class="det-prezzo-box">' +
+      '<div class="det-prezzo-lbl">Amazon</div>' +
+      '<div class="det-prezzo-val" style="color:var(--accent)">' + (prod.prezzoAmz || '—') + '</div>' +
+    '</div>' +
+    '<div class="det-prezzo-box">' +
+      '<div class="det-prezzo-lbl">eBay</div>' +
+      '<div class="det-prezzo-val" style="color:var(--green)" id="detPrezzoEbay-' + idx + '">' + (prod.prezzoEbay || '—') + '</div>' +
+    '</div>' +
+  '</div>';
+
+  // Titolo eBay (modificabile)
+  html += '<div class="det-label">TITOLO EBAY (modificabile)</div>';
+  html += '<textarea class="det-text-edit" data-field="titoloEbay" data-idx="' + idx + '" maxlength="80">' +
+    (prod.titoloEbay || prod.titolo || '') + '</textarea>';
+  html += '<button class="btn-salva-modifica" data-idx="' + idx + '" data-field="titoloEbay">Salva titolo</button>';
+
+  // Titolo originale Amazon
+  html += '<div class="det-label">TITOLO ORIGINALE AMAZON</div>';
+  html += '<div class="det-text" style="color:var(--muted);font-size:0.76rem">' + (prod.titoloOrig || '') + '</div>';
+
+  // Testo annuncio eBay
+  html += '<div class="det-label">TESTO ANNUNCIO EBAY</div>';
+  var bullHtml = '';
+  if (prod.specs && prod.specs.length) {
+    bullHtml = prod.specs.map(function(s) { return '• ' + s.n + ': ' + s.v; }).join('\n');
+  }
+  var testoAnn = (prod.titoloOrig || '') +
+    '\n\nSPEDIZIONE GRATUITA IN TUTTA ITALIA' +
+    '\n\nASIN: ' + prod.asin +
+    (bullHtml ? '\n\n' + bullHtml : '') +
+    (prod.desc ? '\n\n' + prod.desc.substring(0, 1000) : '');
+  html += '<div class="det-text" style="white-space:pre-wrap;font-size:0.76rem">' + testoAnn + '</div>';
+
+  // Specifiche
+  if (prod.specs && prod.specs.length > 0) {
+    html += '<div class="det-label">SPECIFICHE (' + prod.specs.length + ')</div>';
+    html += '<div class="det-specs-grid">';
+    prod.specs.forEach(function(s) {
+      html += '<div class="det-spec"><div class="det-spec-key">' + s.n + '</div><div class="det-spec-val">' + s.v + '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  return html;
+}
+
+// Salva modifica titolo eBay
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.classList.contains('btn-salva-modifica')) {
+    var idx = parseInt(e.target.getAttribute('data-idx'));
+    var field = e.target.getAttribute('data-field');
+    var panel = document.getElementById('det-' + idx);
+    if (!panel) return;
+    var textarea = panel.querySelector('textarea[data-field="' + field + '"]');
+    if (!textarea || !prodotti[idx]) return;
+    prodotti[idx][field] = textarea.value.trim().substring(0, 80);
+    // Aggiorna anche il titolo visibile nella card
+    var cards = document.querySelectorAll('.prod-titolo');
+    if (cards[idx]) cards[idx].textContent = prodotti[idx][field];
+    salva();
+    notif('Titolo salvato!', 'ok');
+  }
+});
+
+function aggiornaPrezzoEbay(idx, val) {
+  if (!prodotti[idx]) return;
+  prodotti[idx].prezzoEbay = val;
+  salva();
+  aggiornaUI();
+  var stato = document.getElementById('stato-' + idx);
+  if (stato) {
+    var ok = val && parseFloat(val) > 0;
+    stato.className = 'prezzo-stato ' + (ok ? 'ok' : 'ko');
+    stato.textContent = ok ? 'Prezzo inserito' : 'Inserisci il prezzo eBay';
+  }
+  var detVal = document.getElementById('detPrezzoEbay-' + idx);
+  if (detVal) detVal.textContent = val || '—';
+}
+
+function rimuoviProd(idx) {
+  prodotti.splice(idx, 1);
+  salva();
+  aggiornaUI();
+  renderProdotti();
+}
+
+function svuotaLista() {
+  if (confirm('Svuotare tutta la lista prodotti?')) {
+    prodotti = [];
+    salva();
+    aggiornaUI();
+    renderProdotti();
+  }
+}
+
+// ===== RENDER CSV =====
+function renderCSV() {
+  var empty = document.getElementById('csvEmpty');
+  var container = document.getElementById('csvContainer');
+  if (prodotti.length === 0) {
+    empty.style.display = 'block';
+    container.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  container.style.display = 'block';
+  var conPrezzo = prodotti.filter(function(p) { return p.prezzoEbay && parseFloat(p.prezzoEbay) > 0; }).length;
+  document.getElementById('riepTot').textContent = prodotti.length;
+  document.getElementById('riepOk').textContent = conPrezzo;
+  document.getElementById('riepNo').textContent = prodotti.length - conPrezzo;
+  document.getElementById('csvOkBox').style.display = 'none';
+}
+
+// ===== GENERA CSV =====
+function generaCSV() {
+  var pronti = prodotti.filter(function(p) { return p.prezzoEbay && parseFloat(p.prezzoEbay) > 0; });
+  if (pronti.length === 0) {
+    notif('Inserisci il prezzo su almeno un prodotto', 'err');
+    return;
+  }
+
+  var qta = parseInt(document.getElementById('csvQta').value) || 5;
+  var cond = document.getElementById('csvCond').value || '1000';
+  var sponsor = parseFloat(document.getElementById('csvSponsor').value) || 2.1;
+
+  var sped = document.getElementById('profSped').value || 'Spedizione AMZ Italia';
+  var reso = document.getElementById('profReso').value || 'reso AMZ ITALIA';
+  var pag = document.getElementById('profPag').value || 'EBAY PAGAMENTO ITALIA';
+
+  var headers = [
+    'Action','SiteID','Country','Currency','DispatchTimeMax',
+    'Title','Description','PicURL','Category',
+    'StartPrice','Quantity','ConditionID','ListingDuration',
+    'ShippingProfileName','ReturnProfileName','PaymentProfileName',
+    'AdFormat','AdRate','PostalCode','Location'
+  ];
+
+  var righe = [headers.join(',')];
+
+  pronti.forEach(function(p) {
+    // Titolo eBay (max 80 caratteri)
+    var titolo = (p.titoloEbay || p.titolo || '').replace(/"/g, '""').substring(0, 80);
+
+    // Foto (max 12)
+    var imgs = p.imgs || [];
+    var pics = imgs.slice(0, 12).join('|');
+
+    // Descrizione HTML completa
+    var specsHtml = '';
+    if (p.specs && p.specs.length) {
+      specsHtml = '<ul>' + p.specs.map(function(s) {
+        return '<li><strong>' + s.n + ':</strong> ' + s.v + '</li>';
+      }).join('') + '</ul>';
+    }
+    var desc =
+      '<p><strong>' + (p.titoloOrig || p.titolo || '').replace(/"/g, "'") + '</strong></p>' +
+      '<p>&nbsp;</p>' +
+      '<p>SPEDIZIONE GRATUITA IN TUTTA ITALIA</p>' +
+      '<p>&nbsp;</p>' +
+      '<p>ASIN: ' + p.asin + '</p>' +
+      (specsHtml ? '<p>&nbsp;</p>' + specsHtml : '') +
+      (p.desc ? '<p>&nbsp;</p><p>' + p.desc.replace(/"/g, "'").substring(0, 1500) + '</p>' : '');
+    desc = desc.replace(/"/g, '""');
+
+    var prezzo = parseFloat(p.prezzoEbay).toFixed(2);
+
+    righe.push([
+      'Add',
+      'Italy',
+      'IT',
+      'EUR',
+      '3',
+      '"' + titolo + '"',
+      '"' + desc + '"',
+      '"' + pics + '"',
+      '""',
+      prezzo,
+      qta,
+      cond,
+      'GTC',
+      '"' + sped + '"',
+      '"' + reso + '"',
+      '"' + pag + '"',
+      'Classified',
+      sponsor.toFixed(1),
+      '80100',
+      '"Italia"'
+    ].join(','));
+  });
+
+  var csv = '\uFEFF' + righe.join('\r\n');
+  var nomeFile = 'dropcsv_' + pronti.length + '_prodotti.csv';
+
+  // Download Blob (funziona su Samsung)
+  try {
+    var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = nomeFile;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      if (a.parentNode) document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 3000);
+  } catch(e) {
+    // Fallback data URI
+    try {
+      var a2 = document.createElement('a');
+      a2.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      a2.download = nomeFile;
+      a2.style.display = 'none';
+      document.body.appendChild(a2);
+      a2.click();
+      setTimeout(function() { if (a2.parentNode) document.body.removeChild(a2); }, 3000);
+    } catch(e2) {}
+  }
+
+  // Mostra box OK con testo CSV
+  document.getElementById('csvOkBox').style.display = 'block';
+  document.getElementById('csvTesto').value = csv;
+  notif('CSV pronto! ' + pronti.length + ' prodotti', 'ok');
+  document.getElementById('csvOkBox').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+function copiaCSV() {
+  var ta = document.getElementById('csvTesto');
+  if (!ta) return;
+  try {
+    ta.select();
+    document.execCommand('copy');
+    notif('CSV copiato!', 'ok');
+  } catch(e) {
+    notif('Seleziona e copia manualmente', '');
+  }
+}
+
+// ===== IMPOSTAZIONI =====
+function caricaImpost() {
+  var k = localStorage.getItem('csv_api_key');
+  document.getElementById('apiKeyInput').value = k || CHIAVE_API;
+
+  var sp = localStorage.getItem('csv_prof_sped');
+  var re = localStorage.getItem('csv_prof_reso');
+  var pa = localStorage.getItem('csv_prof_pag');
+  if (sp) document.getElementById('profSped').value = sp;
+  if (re) document.getElementById('profReso').value = re;
+  if (pa) document.getElementById('profPag').value = pa;
+}
+
+function salvaApiKey() {
+  var k = document.getElementById('apiKeyInput').value.trim();
+  if (!k) { notif('Chiave vuota', 'err'); return; }
+  localStorage.setItem('csv_api_key', k);
+  CHIAVE_API = k;
+  notif('Chiave salvata!', 'ok');
+}
+
+function salvaProfili() {
+  localStorage.setItem('csv_prof_sped', document.getElementById('profSped').value);
+  localStorage.setItem('csv_prof_reso', document.getElementById('profReso').value);
+  localStorage.setItem('csv_prof_pag', document.getElementById('profPag').value);
+  notif('Profili salvati!', 'ok');
+}
+
+function svuotaTutto() {
+  if (confirm('Cancellare tutti i prodotti?')) {
+    prodotti = [];
+    salva();
+    aggiornaUI();
+    notif('Lista svuotata', 'ok');
+  }
+}
+
+// ===== INIT =====
+aggiornaUI();
+</script>
+</body>
+</html>
