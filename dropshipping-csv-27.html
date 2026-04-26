@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DropCSV v27</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --s1: #111111;
+  --s2: #1a1a1a;
+  --s3: #222222;
+  --border: #2a2a2a;
+  --text: #f0f0f0;
+  --muted: #777777;
+  --accent: #f0a500;
+  --green: #2ecc71;
+  --red: #e74c3c;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* SPLASH */
+#splash {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999; transition: opacity 0.4s;
+}
+#splash h1 { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; letter-spacing: -1px; }
+#splash h1 span { color: var(--accent); }
+#splash p { color: var(--muted); margin-top: 8px; font-size: 0.82rem; }
+.splash-btn {
+  margin-top: 32px; background: var(--accent); color: #000;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem;
+  padding: 15px 48px; border: none; border-radius: 50px; cursor: pointer;
+}
+
+/* APP */
+.app { display: none; }
+.app.visible { display: block; }
+
+/* TABS */
+.tabs {
+  display: flex; background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.tab {
+  flex: 1; padding: 14px 4px; text-align: center;
+  font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700;
+  color: var(--muted); cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all 0.2s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* PAGES */
+.page { display: none; padding: 14px; padding-bottom: 40px; }
+.page.active { display: block; }
+
+/* CARD */
+.card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px; margin-bottom: 12px;
+}
+.card-label {
+  font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--accent); margin-bottom: 10px;
+}
+
+/* STEP BOX */
+.step-box {
+  background: var(--s2); border-radius: 10px; padding: 12px;
+  font-size: 0.82rem; color: var(--muted); line-height: 1.9; margin-bottom: 12px;
+}
+.step-box strong { color: var(--text); }
+
+/* INPUT */
+.input-field {
+  width: 100%; background: var(--s2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; color: var(--text);
+  font-size: 0.88rem; font-family: 'DM Sans', sans-serif; outline: none;
+}
+.input-field:focus { border-color: var(--accent); }
+.input-field::placeholder { color: var(--muted); }
+
+/* BUTTONS */
+.btn {
+  display: block; width: 100%; padding: 14px; border: none; border-radius: 12px;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem;
+  cursor: pointer; margin-top: 10px; text-align: center; text-decoration: none;
+}
+.btn-orange { background: var(--accent); color: #000; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <h1>Drop<span>CSV</span></h1>
+  <p>Generatore CSV per eBay — v27</p>
+  <button class="splash-btn" onclick="avvia()">&#9654; ENTRA</button>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" id="tab-spia" onclick="mostraTab('spia')">Spia</div>
+    <div class="tab" id="tab-cerca" onclick="mostraTab('cerca')">Cerca</div>
+    <div class="tab" id="tab-prodotti" onclick="mostraTab('prodotti')">Prodotti</div>
+    <div class="tab" id="tab-csv" onclick="mostraTab('csv')">CSV</div>
+    <div class="tab" id="tab-impost" onclick="mostraTab('impost')">Set</div>
+  </div>
+
+  <!-- TAB SPIA -->
+  <div class="page active" id="page-spia">
+
+    <div class="card">
+      <div class="card-label">Passo 1 — Apri carugno-shop</div>
+      <div class="step-box">
+        1 — Clicca il pulsante qui sotto<br>
+        2 — Guarda i prodotti <strong>Venduti</strong><br>
+        3 — <strong>Copia il titolo</strong> del prodotto che ti interessa<br>
+        4 — Torna qui e incollalo nel campo sotto
+      </div>
+      <a href="https://www.ebay.it/sch/i.html?_ssn=carugno-shop&_sop=13" target="_blank" class="btn btn-orange">
+        Apri carugno-shop
+      </a>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Passo 2 — Cerca su Amazon</div>
+      <div class="step-box">
+        Incolla il titolo copiato da carugno-shop.<br>
+        Clicca <strong>Cerca su Amazon</strong> per trovare il prodotto.
+      </div>
+      <form action="https://www.amazon.it/s" method="GET" target="_blank">
+        <input type="text" name="k" id="spiaInput" class="input-field" placeholder="Incolla qui il titolo del prodotto...">
+        <button type="submit" class="btn btn-orange" style="margin-top:10px">Cerca su Amazon</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Passo 3 — Copia il link Amazon</div>
+      <div class="step-box">
+        Hai trovato il prodotto su Amazon?<br>
+        1 — <strong>Copia il link</strong> dalla barra del browser<br>
+        2 — Vai nella tab <strong style="color:var(--accent)">Cerca</strong><br>
+        3 — Incolla il link e premi Cerca prodotti
+      </div>
+      <button class="btn btn-ghost" onclick="mostraTab('cerca')" style="margin-top:0">
+        Vai alla tab Cerca
+      </button>
+    </div>
+
+  </div>
+
+  <!-- TAB CERCA (vuota per ora) -->
+  <div class="page" id="page-cerca">
+    <div class="card" style="text-align:center;padding:40px 14px">
+      <p style="color:var(--muted)">Tab Cerca — in arrivo</p>
+    </div>
+  </div>
+
+  <!-- TAB PRODOTTI (vuota per ora) -->
+  <div class="page" id="page-prodotti">
+    <div class="card" style="text-align:center;padding:40px 14px">
+      <p style="color:var(--muted)">Tab Prodotti — in arrivo</p>
+    </div>
+  </div>
+
+  <!-- TAB CSV (vuota per ora) -->
+  <div class="page" id="page-csv">
+    <div class="card" style="text-align:center;padding:40px 14px">
+      <p style="color:var(--muted)">Tab CSV — in arrivo</p>
+    </div>
+  </div>
+
+  <!-- TAB IMPOSTAZIONI (vuota per ora) -->
+  <div class="page" id="page-impost">
+    <div class="card" style="text-align:center;padding:40px 14px">
+      <p style="color:var(--muted)">Tab Impostazioni — in arrivo</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function avvia() {
+  var splash = document.getElementById('splash');
+  splash.style.opacity = '0';
+  setTimeout(function() {
+    splash.style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+  }, 400);
+}
+
+function mostraTab(t) {
+  ['spia','cerca','prodotti','csv','impost'].forEach(function(n) {
+    document.getElementById('tab-' + n).classList.toggle('active', n === t);
+    document.getElementById('page-' + n).classList.toggle('active', n === t);
+  });
+}
+</script>
+</body>
+</html>
