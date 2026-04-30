@@ -2497,23 +2497,24 @@ function generaCSV() {
   });
   var csv='\uFEFF'+righe.join('\r\n');
   var nomeFile='dropcsv_'+pronti.length+'_prodotti.csv';
-  // Web Share API - metodo migliore su Samsung
-  try {
-    var shareFile = new File([csv], nomeFile, {type: 'text/csv'});
-    if (navigator.canShare && navigator.canShare({files: [shareFile]})) {
-      navigator.share({files: [shareFile], title: nomeFile});
-    } else {
-      throw new Error('no share');
-    }
-  } catch(e) {
-    // Fallback Blob
-    var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-    var blobUrl2 = URL.createObjectURL(blob);
-    var aLink = document.createElement('a');
-    aLink.href = blobUrl2; aLink.download = nomeFile; aLink.style.display = 'none';
-    document.body.appendChild(aLink); aLink.click();
-    setTimeout(function(){ document.body.removeChild(aLink); URL.revokeObjectURL(blobUrl2); }, 3000);
-  }
+  // Form POST con target _self - metodo ChatGPT (funziona su Samsung)
+  var form = document.createElement('form');
+  form.method = 'POST';
+  form.action = 'https://dropcsv.carminefascion1.workers.dev/download';
+  form.target = '_self';
+  var textarea = document.createElement('textarea');
+  textarea.name = 'csv';
+  textarea.value = csv;
+  textarea.style.display = 'none';
+  var inputName = document.createElement('input');
+  inputName.type = 'hidden';
+  inputName.name = 'filename';
+  inputName.value = nomeFile;
+  form.appendChild(textarea);
+  form.appendChild(inputName);
+  document.body.appendChild(form);
+  form.submit();
+
   document.getElementById('csvOkBox').style.display='block';
   document.getElementById('csvTestoArea').value=csv;
   document.getElementById('csvOkBox').scrollIntoView({behavior:'smooth',block:'start'});
