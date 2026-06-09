@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Gemini + Taxonomy v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f0f; color: #e8e8e8; font-family: 'Segoe UI', sans-serif; min-height: 100vh; padding: 24px 16px; }
+  h1 { color: #f5a623; font-size: 1.3rem; margin-bottom: 4px; }
+  p.sub { color: #888; font-size: 0.82rem; margin-bottom: 20px; }
+  .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .label { font-size: 0.75rem; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 12px; }
+  .label:first-child { margin-top: 0; }
+  textarea { width: 100%; background: #111; border: 1px solid #333; border-radius: 8px; color: #e8e8e8; font-size: 0.88rem; padding: 10px; resize: vertical; }
+  #titoloInput { min-height: 60px; }
+  #descrizioneInput { min-height: 120px; }
+  button { width: 100%; background: #f5a623; color: #000; border: none; border-radius: 8px; padding: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 12px; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .valore { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; }
+  .query-en { color: #7eb8ff; font-size: 1.05rem; font-weight: 700; }
+  .cat-it { color: #f5a623; }
+  .cat-row { background: #111; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; border-left: 3px solid #333; }
+  .cat-row:nth-child(1) { border-left-color: #f5a623; }
+  .cat-row:nth-child(2) { border-left-color: #7eb8ff; }
+  .cat-nome { font-weight: 700; font-size: 0.9rem; }
+  .cat-id { color: #7eb8ff; font-size: 0.8rem; margin-top: 3px; }
+  .cat-path { color: #666; font-size: 0.73rem; margin-top: 3px; }
+  .num { display:inline-block; background:#2a2a2a; color:#f5a623; border-radius:4px; font-size:0.7rem; font-weight:700; padding:2px 6px; margin-right:6px; }
+  .spec-row { display:flex; gap:8px; padding:6px 0; border-bottom:1px solid #222; }
+  .spec-key { color:#888; font-size:0.78rem; font-weight:700; min-width:140px; }
+  .spec-val { font-size:0.82rem; }
+  .errore { color: #ff7070; font-size: 0.85rem; padding: 10px; background: #1f1010; border-radius: 8px; }
+  .loading { color: #888; font-size: 0.85rem; text-align: center; padding: 20px; }
+  .step { font-size:0.8rem; padding:4px 0; }
+  .step-done { color:#4caf50; }
+  .step-active { color:#f5a623; }
+  .divider { border: none; border-top: 1px solid #2a2a2a; margin: 12px 0; }
+  .badge-count { background:#f5a623; color:#000; border-radius:10px; font-size:0.7rem; font-weight:700; padding:2px 8px; margin-left:6px; }
+</style>
+</head>
+<body>
+
+<h1>🤖 Test Gemini 2.5 Flash-Lite + Taxonomy v2</h1>
+<p class="sub">Inserisci titolo + descrizione → Gemini trova categoria, specifiche e query inglese → Taxonomy trova ID</p>
+
+<div class="card">
+  <div class="label">Titolo prodotto Amazon</div>
+  <textarea id="titoloInput" placeholder="Es: Ventola di Raffreddamento CPU per NUC8..."></textarea>
+  <div class="label">Descrizione prodotto (opzionale ma consigliata per più specifiche)</div>
+  <textarea id="descrizioneInput" placeholder="Incolla qui la descrizione completa del prodotto Amazon..."></textarea>
+  <button id="btnCerca" onclick="cerca()">🤖 Analizza con Gemini + Taxonomy</button>
+</div>
+
+<div id="stepsBox" style="display:none" class="card">
+  <div class="step" id="step1">⏳ Gemini analizza titolo e descrizione...</div>
+  <div class="step" id="step2" style="color:#555">⏳ Taxonomy cerca categoria...</div>
+</div>
+
+<div id="risultatoBox"></div>
+
+<script>
+const WORKER_URL = 'https://dropcsv.carminefascion1.workers.dev';
+
+async function cerca() {
+  var titolo = document.getElementById('titoloInput').value.trim();
+  var descrizione = document.getElementById('descrizioneInput').value.trim();
+  if (!titolo) { alert('Inserisci almeno il titolo'); return; }
+
+  var btn = document.getElementById('btnCerca');
+  var stepsBox = document.getElementById('stepsBox');
+  var box = document.getElementById('risultatoBox');
+  var step1 = document.getElementById('step1');
+  var step2 = document.getElementById('step2');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ In corso...';
+  stepsBox.style.display = 'block';
+  box.innerHTML = '';
+  step1.className = 'step step-active';
+  step1.textContent = '🤖 Gemini 2.5 Flash-Lite analizza il prodotto...';
+  step2.className = 'step';
+  step2.style.color = '#555';
+
+  try {
+    var resp = await fetch(WORKER_URL + '/test-gemini-taxonomy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titolo, descrizione })
+    });
+
+    step1.className = 'step step-done';
+    step1.textContent = '✅ Gemini ha analizzato il prodotto';
+    step2.className = 'step step-active';
+    step2.textContent = '🔍 Taxonomy sta cercando ID categoria...';
+
+    var data = await resp.json();
+
+    step2.className = 'step step-done';
+    step2.textContent = '✅ Taxonomy ha risposto';
+
+    if (!data.ok) {
+      box.innerHTML = '<div class="card"><div class="errore">❌ ' + escHtml(data.error || 'Errore sconosciuto') + (data.details ? '<br><small>' + escHtml(String(data.details).substring(0, 200)) + '</small>' : '') + '</div></div>';
+      return;
+    }
+
+    var html = '<div class="card">';
+
+    // Categoria e query
+    html += '<div class="label">Categoria italiana (Gemini)</div>';
+    html += '<div class="valore cat-it">📂 ' + escHtml(data.gemini_categoria_it || '—') + '</div>';
+    html += '<div class="label">Query inglese per Taxonomy (Gemini)</div>';
+    html += '<div class="valore query-en">🔍 "' + escHtml(data.gemini_query_en) + '"</div>';
+
+    // Specifiche
+    var specs = data.specifiche || {};
+    var specKeys = Object.keys(specs).filter(k => specs[k] && String(specs[k]).trim());
+    html += '<hr class="divider">';
+    html += '<div class="label">Specifiche trovate da Gemini <span class="badge-count">' + specKeys.length + '</span></div>';
+    if (specKeys.length > 0) {
+      specKeys.forEach(function(k) {
+        html += '<div class="spec-row"><div class="spec-key">' + escHtml(k) + '</div><div class="spec-val">' + escHtml(String(specs[k])) + '</div></div>';
+      });
+    } else {
+      html += '<div style="color:#888;font-size:0.82rem">Nessuna specifica trovata</div>';
+    }
+
+    // Risultati Taxonomy
+    html += '<hr class="divider">';
+    html += '<div class="label">Risultati Taxonomy <span class="badge-count">' + (data.risultati ? data.risultati.length : 0) + '</span></div>';
+    if (data.risultati && data.risultati.length > 0) {
+      data.risultati.forEach(function(r, i) {
+        html += '<div class="cat-row">' +
+          '<div class="cat-nome"><span class="num">' + (i+1) + '</span>' + escHtml(r.nome) + '</div>' +
+          '<div class="cat-id">🔢 ID: <strong>' + escHtml(r.id) + '</strong></div>' +
+          '<div class="cat-path">📂 ' + escHtml(r.path) + '</div>' +
+          '</div>';
+      });
+    } else {
+      html += '<div style="color:#888;font-size:0.85rem">Nessun risultato Taxonomy</div>';
+    }
+
+    html += '</div>';
+    box.innerHTML = html;
+
+  } catch(e) {
+    box.innerHTML = '<div class="card"><div class="errore">❌ Errore: ' + escHtml(e.message) + '</div></div>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🤖 Analizza con Gemini + Taxonomy';
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
