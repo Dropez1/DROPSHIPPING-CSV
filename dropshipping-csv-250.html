@@ -2519,36 +2519,43 @@ async function mostraProdotto(p) {
   }
 
   function caricaFotoConRetry() {
-    // STEP 1 — /foto RapidAPI (solo foto principali, no varianti)
+    // STEP 1 — /foto con RapidAPI: priorità alle foto associate all'ASIN selezionato
     fetch(WORKER_URL + '/foto?asin=' + asin)
       .then(function(r){ return r.json(); })
       .then(function(d){
         var fotoRapid = (d && d.photos) ? d.photos : [];
         var eanRapid = d && d.ean ? d.ean : null;
 
-        if (fotoRapid.length >= 2) {
-          // RapidAPI ha trovato foto — usa queste (no varianti)
+        if (fotoRapid.length >= 3) {
+          // RapidAPI ha trovato abbastanza foto — usa solo queste
           aggiorniaGrigliaFoto(fotoRapid, eanRapid);
           return;
         }
 
-        // STEP 2 — RapidAPI non ha trovato niente, usa /amazon-images (scraping)
+        // STEP 2 — poche foto da /foto: usa amazon-images solo come fallback
         fetch(WORKER_URL + '/amazon-images?asin=' + asin)
           .then(function(r2){ return r2.json(); })
           .then(function(d2){
             var foteScraping = (d2 && d2.photos) ? d2.photos : [];
-            var ean = d2 && d2.ean ? d2.ean : null;
+            var eanScraping = d2 && d2.ean ? d2.ean : null;
 
-            if (foteScraping.length > 0) {
-              aggiorniaGrigliaFoto(foteScraping, eanRapid || ean);
-            } else if (fotoRapid.length > 0) {
-              aggiorniaGrigliaFoto(fotoRapid, eanRapid);
+            if (foteScraping.length >= 3) {
+              aggiorniaGrigliaFoto(foteScraping, eanScraping || eanRapid);
+            } else if (fotoRapid.length > 0 || foteScraping.length > 0) {
+              // Se entrambi hanno poche foto, usa comunque il risultato più completo
+              if (fotoRapid.length >= foteScraping.length) {
+                aggiorniaGrigliaFoto(fotoRapid, eanRapid || eanScraping);
+              } else {
+                aggiorniaGrigliaFoto(foteScraping, eanScraping || eanRapid);
+              }
             } else if (_fotoRetry < 2) {
+              // Entrambe vuote — riprova
               _fotoRetry++;
               setTimeout(caricaFotoConRetry, 3000);
             }
           })
           .catch(function(){
+            // amazon-images fallito — usa le eventuali foto trovate da /foto
             if (fotoRapid.length > 0) {
               aggiorniaGrigliaFoto(fotoRapid, eanRapid);
             } else if (_fotoRetry < 2) {
@@ -2558,10 +2565,25 @@ async function mostraProdotto(p) {
           });
       })
       .catch(function(){
-        if (_fotoRetry < 2) {
-          _fotoRetry++;
-          setTimeout(caricaFotoConRetry, 3000);
-        }
+        // /foto fallito — prova amazon-images come fallback
+        fetch(WORKER_URL + '/amazon-images?asin=' + asin)
+          .then(function(r2){ return r2.json(); })
+          .then(function(d2){
+            var foteScraping = (d2 && d2.photos) ? d2.photos : [];
+            var eanScraping = d2 && d2.ean ? d2.ean : null;
+            if (foteScraping.length > 0) {
+              aggiorniaGrigliaFoto(foteScraping, eanScraping);
+            } else if (_fotoRetry < 2) {
+              _fotoRetry++;
+              setTimeout(caricaFotoConRetry, 3000);
+            }
+          })
+          .catch(function(){
+            if (_fotoRetry < 2) {
+              _fotoRetry++;
+              setTimeout(caricaFotoConRetry, 3000);
+            }
+          });
       });
   }
   caricaFotoConRetry();
